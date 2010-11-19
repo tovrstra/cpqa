@@ -56,6 +56,9 @@ Additional features:
     - Comparison to predefined value, e.g. for checksums.
   In practice most absolute tests also act as regression tests.
 
+- Only the files needed for the selection of tests are copied to a new working
+  directory.
+
 - Detailed html output with colored diffstats of test outputs that do not match
   the reference outputs.
 
@@ -169,6 +172,11 @@ precision
     The maximum allowed relative error when comparing the value with a reference
     value.
 
+prefix
+    The part of the output file without '.out' that contains the value to
+    compare with. One should also add a dependency directive as explained below
+    to make sure that the other job is executed first.
+
 script
     A script that will get the arguments specified after the name of the script.
     It must have a zero return code when the test succeeds. In case of error. It
@@ -178,3 +186,20 @@ script
 script arguments
     Custom arguments to the external test script
 
+
+One may also add additional tags to indicate dependencies between test files,
+i.e. than another must be executed before a given test can work. This is done
+as follows:
+
+#CPQA DEPENDS input_filename
+
+where input_filename identifies the other test that must be executed prior to
+the one containing the 'CPQA DEPENDS' line.
+
+
+When a change in the CP2K source code changes in some of the tests outputs, one
+should reset the test such that opun the next test run, the reference data are
+reset to the new values. This can be done by including the following command in
+the input
+
+#CPQA RESET some comments
