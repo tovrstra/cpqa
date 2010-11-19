@@ -1,0 +1,180 @@
+CPQA 0.1
+========
+
+Introduction
+~~~~~~~~~~~~
+
+CPQA is a Quality Assurance framework for CP2K.
+
+It is intended to become a replacement for the do_regtest script that can be
+found in the directory cp2k/tools of the CP2K source tree. In the first place
+CPQA runs and compare regression tests, like the do_regtest script. Moreover, it
+adds new features that make test-driven development in CP2K more fun and more
+efficient.
+
+
+Features
+~~~~~~~~
+
+Common to the do_regtest:
+
+- Run regression tests and compare outputs with a set of reference outputs.
+  In general reference outputs are created when the regression tests are
+  executed for the first time, or when a test is reset.
+
+- Prior to the execution of the tests, CP2K is recompiled.
+
+- Parallel execution of test jobs and execution of parallel tests runs.
+
+Additional features:
+
+- More fine-grained parallelization. Jobs within one directory can be executed
+  in parallel. In case of dependencies, these can be marked with comments in the
+  test inputs.
+
+- All information about a test is contained in the comments of the input. There
+  is no need for the files TEST_FILES, TEST_FILES_RESET, and TEST_TYPES. This
+  reduces the chance on patch collisions when multiple people are resetting
+  tests at the same time. An import script converts the CP2K test directory into
+  the a form that is suitable for CPQA.
+
+- The selection of test inputs can be provided on the command line of
+  cpqa-main.py. One can specify individual inputs and/or entire directories. One
+  can also specify fast:n to execute only the tests that ran faster than n
+  seconds during a previous test. Alternatively one may specify slow:n.
+
+- The order of the tests is determined by their timing in a previous test run.
+  The slowest tests are executed first. If a test is new, it is executed before
+  that tests for which there is already a reference output.
+
+- Multiple tests for one input file.
+
+- Different types of tests, mainly absolute tests for which no reference is
+  required:
+    - Comparison between scalars from two output files.
+    - Test of the output by an external script.
+    - Comparison to predefined value, e.g. for checksums.
+  In practice most absolute tests also act as regression tests.
+
+- Detailed html output with colored diffstats of test outputs that do not match
+  the reference outputs.
+
+- A progress indicator.
+
+- Separation between configuration file and test software. One can easily update
+  to a newer version of CPQA.
+
+- ...
+
+Missing features compared to do_regtest:
+
+- Automatic update to latest CVS version.
+
+- Interaction with g95 memcheck or valgrind.
+
+- ...
+
+
+Installation
+~~~~~~~~~~~~
+
+You need python 2.4. Some external test scripts may have other dependencies,
+e.g. numpy.
+
+First download the latest version with git:
+
+    $ git clone git://github.com/tovrstra/cpqa.git
+
+Then install it in your home directory
+
+    $ cd cpqa
+    $ ./setup.py install --home=~
+
+Make sure the following two enviroment variables are set
+
+    $ export PATH=$PATH:$HOME/bin
+    $ export PYTHONPATH=$PYTHONPATH:$HOME/lib/python
+
+
+Usage
+~~~~~
+
+1) Create an empty work directory and add a file config.py with the following
+   settings:
+
+        cp2k_root='../../cp2knew/cp2k'
+        arch='Linux-x86-64-g95'
+        version='sdbg'
+        nproc=4
+        #nproc_mpi=1
+        #mpi_prefix='mpirun -np %i'
+
+   Change the settings to suit your purposes.
+   
+2) Import the tests from the cp2k source tree
+
+        $ cpqa-import.py
+
+3) Run the tests a first time. For example limit the tests to the Fist tests
+
+        $ cpqa-main.py in/Fist
+
+4) Add some feature or fix some bug. Then run the tests again.
+
+        $ cpqa-main.py in/Fist
+
+   If things go wrong, you will notice error messages in the output.
+
+
+Writing tests
+~~~~~~~~~~~~~
+
+Writing proper tests is an essential aspect of writing software. It may seem a
+waste of time at first, but you will soon notice that it save a lot of time when
+hunting down bugs, or when refactoring parts of the code.
+
+Basically a test is a CP2K input file with some additional tags that indicate
+how the output has to be validated. The following types of tests are currently
+supported by CPQA:
+
+#CPQA TEST SCALAR regex column [expected [precision]]
+
+    This just compares a scalar from the output with the corresponding value in
+    a reference output. One may also specify a fixed expected value, and
+    optionally a precision.
+
+#CPQA TEST COMPARE-SCALAR prefix regex column [precision]
+
+    This test compares a scalar from the output with a corresponding scalar
+    from another test job.
+
+#CPQA TEST SCRIPT script [script arguments]
+
+    Calls an external test script to validate the output
+
+There is no limitation to the number of test associated with one input.
+
+
+Meaning of the arguments:
+
+regex
+    A regular expression (may be quoted it if contains spaces) to select a
+    line from the output
+
+column
+    An integer to select the column containing the scalar that must be checked.
+    Counting starts from zero.
+
+precision
+    The maximum allowed relative error when comparing the value with a reference
+    value.
+
+script
+    A script that will get the arguments specified after the name of the script.
+    It must have a zero return code when the test succeeds. In case of error. It
+    should print some output that will be picked up by CPQA to explain what went
+    wrong.
+
+script arguments
+    Custom arguments to the external test script
+
