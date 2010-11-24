@@ -97,7 +97,7 @@ def main():
     extra_paths = set([])
     for test_dir, test_input, test_index in test_inputs:
         if test_input.endswith('.restart'):
-            print test_input
+            print 'Warning! Skipping: %s (fixme!)' % test_input
             continue
         src_test_dir = os.path.join(config.cp2k_root, 'tests', test_dir)
         dst_test_dir = os.path.join(config.indir, test_dir)
