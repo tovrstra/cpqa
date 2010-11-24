@@ -78,17 +78,53 @@ Missing features compared to do_regtest:
 - ...
 
 
-Installation
-~~~~~~~~~~~~
+Standard Installation
+~~~~~~~~~~~~~~~~~~~~~
 
 You need python 2.4. Some external test scripts may have other dependencies,
 e.g. numpy.
 
-First download the latest version with git:
+If you want to use the stable version of CPQA included in the CP2K source,
+then just go to that directory:
+
+    $ cd tools/cpqa
+
+If you want to use the latest development version of CPQA, then download
+the latest version with git:
 
     $ git clone git://github.com/tovrstra/cpqa.git
+    $ cd cpqa
 
-Then install it in your home directory
+To activate CPQA, load the environment variables in loadenv.sh:
+
+    $ . loadenv.sh
+
+The dot+space in front of loadenv.sh is mandatory. When opening a new
+terminal, the environment variables have to be loaded again.
+
+
+Alternative Installation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+You need python 2.4. Some external test scripts may have other dependencies,
+e.g. numpy.
+
+This procedure may not work on some broken Linux distributions, including
+Suse Linux. One may uncomment the line prefix=/usr/local in the file
+/usr/lib*/python*/distutils/distutils.cfg to fix this issue.
+
+If you want to use the stable version of CPQA included in the CP2K source,
+then just go to that directory:
+
+    $ cd tools/cpqa
+
+If you want to use the latest development version of CPQA, then download
+the latest version with git:
+
+    $ git clone git://github.com/tovrstra/cpqa.git
+    $ cd cpqa
+
+Then install CPQA in your home directory.
 
     $ cd cpqa
     $ ./setup.py install --home=~
@@ -105,20 +141,23 @@ Usage
 1) Create an empty work directory and add a file config.py with the following
    settings:
 
-        cp2k_root='../../cp2knew/cp2k'
+        cp2k_root='../..'
         arch='Linux-x86-64-g95'
         version='sdbg'
-        nproc=4
+        nproc=2
         #nproc_mpi=1
         #mpi_prefix='mpirun -np %i'
 
    Change the settings to suit your purposes.
    
-2) Import the tests from the cp2k source tree
+2) Import the tests from the cp2k source tree:
 
         $ cpqa-import.py
 
-3) Run the tests a first time. For example limit the tests to the Fist tests
+3) Run the tests a first time with a version of CP2K you trust. This step
+   generates the reference outputs. In the following example we limit the
+   tests to the Fist directory. cpqa-main.py first tries to compile the
+   source code.
 
         $ cpqa-main.py in/Fist
 
@@ -133,8 +172,8 @@ Writing tests
 ~~~~~~~~~~~~~
 
 Writing proper tests is an essential aspect of writing software. It may seem a
-waste of time at first, but you will soon notice that it save a lot of time when
-hunting down bugs, or when refactoring parts of the code.
+waste of time at first, but you will soon notice that it saveis a lot of time
+when hunting down bugs, or when refactoring parts of the code.
 
 Basically a test is a CP2K input file with some additional tags that indicate
 how the output has to be validated. The following types of tests are currently
@@ -143,17 +182,19 @@ supported by CPQA:
 #CPQA TEST SCALAR regex column [expected [precision]]
 
     This just compares a scalar from the output with the corresponding value in
-    a reference output. One may also specify a fixed expected value, and
+    the reference output. One may also specify a fixed expected value, and
     optionally a precision.
 
 #CPQA TEST COMPARE-SCALAR prefix regex column [precision]
 
     This test compares a scalar from the output with a corresponding scalar
-    from another test job.
+    from another test job. This other test job is supposed executed in the same
+    test run. Therefore one must also add a dependency (see below). Additionally
+    the value is also compared with the reference output
 
 #CPQA TEST SCRIPT script [script arguments]
 
-    Calls an external test script to validate the output
+    Calls an external test script to validate the output.
 
 There is no limitation to the number of test associated with one input.
 
