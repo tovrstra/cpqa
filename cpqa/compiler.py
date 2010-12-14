@@ -33,3 +33,5 @@ def compile_cp2k(config):
     ))
     if retcode != 0:
         raise RuntimeError('CP2K compilation failed.')
+    if not os.path.isfile(config.cp2k_bin):
+        raise IOError('Could not locate cp2k binary: %s' % config.cp2k_bin)

@@ -59,8 +59,6 @@ class Config(object):
             self.mpi_prefix = self.mpi_prefix % self.nproc_mpi
         # Some derived config vars and checks
         self.cp2k_bin = os.path.join(self.cp2k_root, 'exe', self.arch, 'cp2k.%s' % self.version)
-        if not os.path.isfile(self.cp2k_bin):
-            raise IOError('Could not locate cp2k binary: %s' % self.cp2k_bin)
         self.bintag = '%s--%s' % (self.arch, self.version)
         self.datetag = datetime.datetime.now().strftime('%Y-%m-%d-%a--%H-%M-%S')
         self.runtag = '%s--%s' % (self.bintag, self.datetag)
