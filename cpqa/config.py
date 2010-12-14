@@ -26,7 +26,7 @@ __all__ = ['Config']
 
 
 class Config(object):
-    def __init__(self):
+    def __init__(self, args):
         # Get stuff from the config.py file
         if not os.path.isfile('config.py'):
             raise IOError('Could not find file config.py')
@@ -69,10 +69,9 @@ class Config(object):
         self.lastlink = 'tst--%s--last' % self.bintag
         self.indir = 'in'
         # Get command line args for test selection
-        self.parse_args()
+        self.parse_args(args)
 
-    def parse_args(self):
-        args = sys.argv[1:]
+    def parse_args(self, args):
         self.select_dirs = []
         self.select_prefixes = []
         self.faster_than = None

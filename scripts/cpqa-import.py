@@ -22,13 +22,34 @@
 
 
 import os, shutil
+from optparse import OptionParser
 
 from cpqa import Config, TestInput
 
 
+usage = """Usage: %prog
+
+No arguments are allowed.
+
+This script imports the test files from the cp2k source tree and adds CPQA tags
+to the inputs based on the legacy test directory layout. All input files and
+related files are stored in a subdirectory 'in' of the current corking
+directory. This is the location where the cpqa-main.py script will look for
+test inputs.
+"""
+
+
+def parse_args():
+    parser = OptionParser(usage)
+    (options, args) = parser.parse_args()
+    if len(args) > 0:
+        raise TypeError('Expecting no command line arguments.')
+
+
 def main():
+    parse_args()
     # Load the configuration (from config.py file).
-    config = Config()
+    config = Config([])
 
     # load list of test types
     test_types= []

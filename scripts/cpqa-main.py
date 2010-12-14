@@ -20,16 +20,35 @@
 # --
 
 
+import os, sys
+from optparse import OptionParser
+
 from cpqa import Config, compile_cp2k, Work, Runner, log_txt, log_html, Timer
 
-import os, sys
+
+usage = """Usage: %prog [input1.inp input2.inp ...] [directory1 directory2 ...] [fast:n|slow:n]
+
+The order of the command line arguments does not matter. If no arguments are
+given, all tests are executed.
+
+This is the workhorse of CPQA. It runs all the tests and in case some tests
+fail or give wrong results, it makes an overview of the failures in text and
+html format.
+"""
+
+
+def parse_args():
+    parser = OptionParser(usage)
+    (options, args) = parser.parse_args()
+    return args
 
 
 def main():
+    args = parse_args()
     # Measure the total wall-time
     timer = Timer()
     # Load the configuration (from config.py file and from command line args).
-    config = Config()
+    config = Config(args)
     # Initialize the working directory.
     work = Work(config)
     # Try to compile CP2K

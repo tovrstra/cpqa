@@ -21,12 +21,21 @@
 
 
 import sys, os, shutil, datetime, cPickle, traceback
+from optparse import OptionParser
 
 from cpqa import TestInput, TestResult, harvest_test, Timer, tail
 
 
+usage = """Usage: %prog cp2k_bin tstpath refdir [mpi_prefix]
+
+This script is called by cpqa-main.py to run a test job and validate the output.
+It should not be used directly.
+"""
+
+
 def parse_args():
-    args = sys.argv[1:]
+    parser = OptionParser(usage)
+    (options, args) = parser.parse_args()
     if len(args) == 3:
         cp2k_bin, tstpath, refdir = args
         mpi_prefix = ''

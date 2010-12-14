@@ -20,15 +20,29 @@
 # --
 
 import sys, os
+from optparse import OptionParser
 
-def main():
-    args = sys.argv[1:]
+
+usage = """Usage: %prog some.inp dependency.inp
+
+This script adds a dependency tag to the file 'some.inp' such that it is
+executed after 'dependency.inp'.
+"""
+
+def parse_args():
+    parser = OptionParser(usage)
+    (options, args) = parser.parse_args()
     if len(args) != 2:
         raise TypeError('Expecting two arguments')
     if not (os.path.isfile(args[0]) and os.path.isfile(args[1])):
         raise ValueError('Both arguments must be existing files.')
     if not (args[0].endswith('.inp') and args[1].endswith('.inp')):
         raise ValueError('Both arguments must be input files.')
+    return args
+
+
+def main():
+    args = parse_args()
     # read the first file
     f = open(args[0])
     data = f.read()
@@ -38,6 +52,7 @@ def main():
     f.write('#CPQA DEPENDS %s\n' % args[1])
     f.write(data)
     f.close()
+
 
 if __name__ == '__main__':
     main()
