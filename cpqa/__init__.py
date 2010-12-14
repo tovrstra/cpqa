@@ -21,6 +21,7 @@
 from cpqa.compiler import *
 from cpqa.config import *
 from cpqa.data import *
+from cpqa.importer import *
 from cpqa.io import *
 from cpqa.log import *
 from cpqa.runner import *

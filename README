@@ -151,11 +151,7 @@ Usage
 
    Change the settings to suit your purposes.
 
-2) Import the tests from the cp2k source tree:
-
-        $ cpqa-import.py
-
-3) Run the tests a first time with a version of CP2K you trust. This step
+2) Run the tests a first time with a version of CP2K you trust. This step
    generates the reference outputs. In the following example we limit the
    tests to the Fist directory. cpqa-main.py first tries to compile the
    source code.
@@ -167,7 +163,7 @@ Usage
    'tst--...--last' always points to the directory with the outputs of the last
    test run.
 
-4) Add some feature or fix some bug. Then run the tests again.
+3) Add some feature or fix some bug. Then run the tests again.
 
         $ cpqa-main.py in/Fist
 

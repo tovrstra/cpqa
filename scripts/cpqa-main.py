@@ -23,7 +23,8 @@
 import os, sys
 from optparse import OptionParser
 
-from cpqa import Config, compile_cp2k, Work, Runner, log_txt, log_html, Timer
+from cpqa import Config, compile_cp2k, Work, Runner, log_txt, log_html, Timer, \
+    import_main
 
 
 usage = """Usage: %prog [input1.inp input2.inp ...] [directory1 directory2 ...] [fast:n|slow:n]
@@ -39,16 +40,23 @@ html format.
 
 def parse_args():
     parser = OptionParser(usage)
+    parser.add_option(
+        "--no-import", default=True, action='store_false', dest='do_import',
+        help="Do not import tests from the cp2k source tree",
+    )
     (options, args) = parser.parse_args()
-    return args
+    return options, args
 
 
 def main():
-    args = parse_args()
+    options, args = parse_args()
     # Measure the total wall-time
     timer = Timer()
     # Load the configuration (from config.py file and from command line args).
     config = Config(args)
+    # Optionally import tests from the source tree.
+    if options.do_import:
+        import_main(config)
     # Initialize the working directory.
     work = Work(config)
     # Try to compile CP2K
