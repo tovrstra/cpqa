@@ -94,6 +94,10 @@ def import_main(config):
                 l.append(comments)
         f.close()
 
+    # Remove old test input directory
+    if os.path.exists(config.indir):
+        shutil.rmtree(config.indir)
+
     # Load inputs and transform them
     extra_paths = set([])
     for test_dir, test_input, test_index in test_inputs:

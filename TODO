@@ -1,5 +1,4 @@
 - Use it for a while and improve stuff. Add better tests.
-- (command-line) documentation
 - Add more dependency CPQA flags. (Fist, FE, and NEB are done)
 - Write a decent README in Markdown
 - Announce
