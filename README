@@ -8,19 +8,19 @@ CPQA is a Quality Assurance framework for CP2K.
 
 It is intended to become a replacement for the do_regtest script that can be
 found in the directory cp2k/tools of the CP2K source tree. In the first place
-CPQA runs and compare regression tests, like the do_regtest script. Moreover, it
-adds new features that make test-driven development in CP2K more fun and more
+CPQA runs and compares regression tests, like the do_regtest script. Moreover,
+it adds new features that make test-driven development in CP2K more fun and more
 efficient.
 
 
 Features
 ~~~~~~~~
 
-Common to the do_regtest:
+In common with the do_regtest script:
 
 - Run regression tests and compare outputs with a set of reference outputs.
-  In general reference outputs are created when the regression tests are
-  executed for the first time, or when a test is reset.
+  Reference outputs are created when the regression tests are executed for the
+  first time, or when a test is reset.
 
 - Prior to the execution of the tests, CP2K is recompiled.
 
@@ -29,31 +29,32 @@ Common to the do_regtest:
 Additional features:
 
 - More fine-grained parallelization. Jobs within one directory can be executed
-  in parallel. In case of dependencies, these can be marked with comments in the
-  test inputs.
+  in parallel. Some test jobs depend on the output of other test jobs. Such
+  dependencies can be defined with comments in the test inputs.
 
-- All information about a test is contained in the comments of the input. There
-  is no need for the files TEST_FILES, TEST_FILES_RESET, and TEST_TYPES. This
-  reduces the chance on patch collisions when multiple people are resetting
-  tests at the same time. An import script converts the CP2K test directory into
-  the a form that is suitable for CPQA.
+- All information about a test is contained in the comments of the test input
+  file. There is no need for the files TEST_FILES, TEST_FILES_RESET, and
+  TEST_TYPES. This reduces the chance on patch collisions when multiple people
+  are resetting tests at the same time. An import script converts the CP2K test
+  directory into the a form that is suitable for CPQA.
 
 - The selection of test inputs can be provided on the command line of
   cpqa-main.py. One can specify individual inputs and/or entire directories. One
-  can also specify fast:n to execute only the tests that ran faster than n
-  seconds during a previous test. Alternatively one may specify slow:n.
+  can also specify fast:n to execute only those tests that ran faster than n
+  seconds during the reference run. Alternatively one may specify slow:n.
 
-- The order of the tests is determined by their timing in a previous test run.
-  The slowest tests are executed first. If a test is new, it is executed before
-  that tests for which there is already a reference output.
+- The order of the tests is determined by their timing in reference computation.
+  The slowest tests are executed first. If a test is new it gets priority over
+  the other tests.
 
-- Multiple tests for one input file.
+- Multiple tests, i.e. comparison of more than just one value, for one input
+  file.
 
 - Different types of tests, mainly absolute tests for which no reference is
   required:
-    - Comparison between scalars from two output files.
+    - Comparison between scalars from two output files in the same test run.
     - Test of the output by an external script.
-    - Comparison to predefined value, e.g. for checksums.
+    - Comparison to a predefined value, e.g. for checksums.
   In practice most absolute tests also act as regression tests.
 
 - Only the files needed for the selection of tests are copied to a new working
@@ -171,9 +172,9 @@ Usage
 Writing tests
 ~~~~~~~~~~~~~
 
-Writing proper tests is an essential aspect of writing software. It may seem a
-waste of time at first, but you will soon notice that it saveis a lot of time
-when hunting down bugs, or when refactoring parts of the code.
+Writing proper tests is an essential aspect of writing reliable software. It may
+seem a waste of time at first, but you will soon notice that it save a lot of
+time when hunting down bugs, or when refactoring parts of the code.
 
 Basically a test is a CP2K input file with some additional tags that indicate
 how the output has to be validated. The following types of tests are currently
@@ -188,30 +189,35 @@ supported by CPQA:
 #CPQA TEST COMPARE-SCALAR prefix regex column [precision]
 
     This test compares a scalar from the output with a corresponding scalar
-    from another test job. This other test job is supposed executed in the same
-    test run. Therefore one must also add a dependency (see below). Additionally
-    the value is also compared with the reference output
+    from another test job. This other test job is supposed to be executed in the
+    same test run. Therefore one must also add a dependency (see below).
+    Additionally the value is also compared with the reference output. The
+    arguments regex, column and precision have the same meaning is in the
+    SCALAR test (see above).
 
 #CPQA TEST SCRIPT script [script arguments]
 
     Calls an external test script to validate the output.
 
-There is no limitation to the number of test associated with one input.
+There is no limitation on the number of test associated with one input.
 
 
 Meaning of the arguments:
 
 regex
     A regular expression (may be quoted it if contains spaces) to select a
-    line from the output
+    line from the output.  The number will be taken from the last line in the
+    output that matches the regular expression.
 
 column
     An integer to select the column containing the scalar that must be checked.
-    Counting starts from zero.
+    Counting starts from zero. The line is split into columns using white space
+    characters as delimiters. Multiples white spaces are considered as one
+    delimiter.
 
 precision
-    The maximum allowed relative error when comparing the value with a reference
-    value.
+    The maximum allowed relative error when comparing the value with a
+    predefined reference value.
 
 prefix
     The part of the output file without '.out' that contains the value to
@@ -220,27 +226,24 @@ prefix
 
 script
     A script that will get the arguments specified after the name of the script.
-    It must have a zero return code when the test succeeds. In case of error. It
-    should print some output that will be picked up by CPQA to explain what went
-    wrong.
+    It must have a zero return code when the test succeeds. In case of error,
+    the script must give a non-zero return code, and it should also print some
+    output that will be picked up by CPQA to explain what went wrong.
 
 script arguments
     Custom arguments to the external test script
 
 
-One may also add additional tags to indicate dependencies between test files,
-i.e. than another must be executed before a given test can work. This is done
-as follows:
+One may also add additional tags to indicate dependencies between test files.
+Consider two test files: a.inp and b.inp. If we want a.inp to be executed before
+b.inp, one has to add a line to the input file b.inp:
 
-#CPQA DEPENDS input_filename
-
-where input_filename identifies the other test that must be executed prior to
-the one containing the 'CPQA DEPENDS' line.
+#CPQA DEPENDS a.inp
 
 
-When a change in the CP2K source code changes in some of the tests outputs, one
-should reset the test such that opun the next test run, the reference data are
-reset to the new values. This can be done by including the following command in
-the input
+When a change in the CP2K source code intentionally affects some of the tests
+outputs, one should reset the test such that upon the next test run, the
+reference data are reset to the new values. This can be done by including the
+following command in the input.
 
 #CPQA RESET some comments
