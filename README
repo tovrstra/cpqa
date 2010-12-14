@@ -150,7 +150,7 @@ Usage
         #mpi_prefix='mpirun -np %i'
 
    Change the settings to suit your purposes.
-   
+
 2) Import the tests from the cp2k source tree:
 
         $ cpqa-import.py
@@ -161,6 +161,11 @@ Usage
    source code.
 
         $ cpqa-main.py in/Fist
+
+   The reference outputs are stored in a directory with the prefix 'ref--'. Each
+   test run also creates a directory 'tst--...'. A symbolic link
+   'tst--...--last' always points to the directory with the outputs of the last
+   test run.
 
 4) Add some feature or fix some bug. Then run the tests again.
 
