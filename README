@@ -248,3 +248,8 @@ reference data are reset to the new values. This can be done by including the
 following command in the input.
 
 #CPQA RESET some comments
+
+Also check out the script cpqa-reset.py that automates the larger part of
+resetting test files. It directly modifies the TEST_FILES_RESET in the CP2K
+source tree, which will be picked up by the importer in cpqa-main.py. This
+guarantees that the reseted tests are also picked up by the do_regtest script.
