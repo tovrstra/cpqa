@@ -26,7 +26,7 @@ __all__ = ['Config']
 
 
 class Config(object):
-    def __init__(self, args):
+    def __init__(self, args, use_last=False):
         # Get stuff from the config.py file
         if not os.path.isfile('config.py'):
             raise IOError('Could not find file config.py')
@@ -60,11 +60,19 @@ class Config(object):
         # Some derived config vars and checks
         self.cp2k_bin = os.path.join(self.cp2k_root, 'exe', self.arch, 'cp2k.%s' % self.version)
         self.bintag = '%s--%s' % (self.arch, self.version)
-        self.datetag = datetime.datetime.now().strftime('%Y-%m-%d-%a--%H-%M-%S')
+        self.lastlink = 'tst--%s--last' % self.bintag
+        if use_last:
+            # try to find the tst--%s--last link and use that date
+            if not os.path.islink(self.lastlink):
+                raise RuntimeError('Could not find test output from last run')
+            tstdir = os.readlink(self.lastlink)
+            self.datetag = tstdir[len(self.bintag)+7:]
+        else:
+            # define a new date tage
+            self.datetag = datetime.datetime.now().strftime('%Y-%m-%d-%a--%H-%M-%S')
         self.runtag = '%s--%s' % (self.bintag, self.datetag)
         self.refdir = 'ref--%s' % self.bintag
         self.tstdir = 'tst--%s' % self.runtag
-        self.lastlink = 'tst--%s--last' % self.bintag
         self.indir = 'in'
         # Get command line args for test selection
         self.parse_args(args)
@@ -91,3 +99,45 @@ class Config(object):
                 self.slower_than = float(arg[5:])
             else:
                 raise ValueError('Arguments must be one optional timing restriction, existing directories or input files.')
+
+    def filter_inputs_name(self, test_inputs):
+        result = []
+        if len(self.select_prefixes) > 0 or len(self.select_dirs) > 0:
+            print '... Making selection of inputs (based on names).'
+            for test_input in test_inputs:
+                done = False
+                for select_prefix in self.select_prefixes:
+                    if test_input.prefix == select_prefix:
+                        result.append(test_input)
+                        done = True
+                        break
+                if done:
+                    continue
+                for select_dir in self.select_dirs:
+                    if test_input.prefix.startswith(select_dir):
+                        result.append(test_input)
+                        break
+        else:
+            print '... Taking all input files.'
+            result = test_inputs
+        return result
+
+    def filter_inputs_timing(self, test_inputs):
+        if self.faster_than is None and self.slower_than is None:
+            return test_inputs
+        elif self.faster_than is not None:
+            print '... Selecting fast jobs (faster than %.2fs)' % self.faster_than
+            # jobs without timing are not included.
+            return [
+                ti for ti in test_inputs if
+                ti.ref_result is not None and
+                ti.ref_result.seconds < self.faster_than
+            ]
+        else:
+            print '... Selecting slow jobs (faster than %.2fs)' % self.slower_than
+            # jobs without timing are not included.
+            return [
+                ti for ti in test_inputs if
+                ti.ref_result is not None and
+                ti.ref_result.seconds > self.slower_than
+            ]

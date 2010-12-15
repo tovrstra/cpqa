@@ -31,9 +31,9 @@ class Runner(object):
     def __init__(self, work):
         self.work = work
         self.config = work.config
-        self._test_inputs = []
-        self.select_name()
-        self.select_timing()
+        test_inputs = self.config.filter_inputs_name(self.work.test_inputs)
+        self.load_references(test_inputs)
+        self.test_inputs = self.config.filter_inputs_timing(test_inputs)
         self.select_dependencies()
         self.sort_test_inputs()
         self.copy_inputs()
@@ -42,58 +42,16 @@ class Runner(object):
         self.collect_test_results()
         self.get_disk_usage()
 
-    def _add_test_input(self, test_input):
+    def load_references(self, test_inputs):
         # Try to get the reference results.
-        fn = os.path.join(self.config.refdir, test_input.prefix + '.pp')
-        if os.path.isfile(fn):
-            f = file(fn)
-            test_input.ref_result = cPickle.load(f)
-            f.close()
-        else:
-            test_input.ref_result = None
-        self._test_inputs.append(test_input)
-
-    def select_name(self):
-        # Make a selection of test input files.
-        if len(self.config.select_prefixes) > 0 or len(self.config.select_dirs) > 0:
-            print '... Making selection of inputs (based on names).'
-            for test_input in self.work.test_inputs:
-                done = False
-                for select_prefix in self.config.select_prefixes:
-                    if test_input.prefix == select_prefix:
-                        self._add_test_input(test_input)
-                        done = True
-                        break
-                if done:
-                    continue
-                for select_dir in self.config.select_dirs:
-                    if test_input.prefix.startswith(select_dir):
-                        self._add_test_input(test_input)
-                        break
-        else:
-            print '... Taking all input files.'
-            for test_input in self.work.test_inputs:
-                self._add_test_input(test_input)
-
-    def select_timing(self):
-        if self.config.faster_than is None and self.config.slower_than is None:
-            return
-        if self.config.faster_than is not None:
-            print '... Selecting fast jobs (faster than %.2fs)' % self.config.faster_than
-            # jobs without timing are not included.
-            self._test_inputs = [
-                ti for ti in self._test_inputs if
-                ti.ref_result is not None and
-                ti.ref_result.seconds < self.config.faster_than
-            ]
-        if self.config.slower_than is not None:
-            print '... Selecting slow jobs (faster than %.2fs)' % self.config.slower_than
-            # jobs without timing are not included.
-            self._test_inputs = [
-                ti for ti in self._test_inputs if
-                ti.ref_result is not None and
-                ti.ref_result.seconds > self.config.slower_than
-            ]
+        for test_input in test_inputs:
+            fn = os.path.join(self.config.refdir, test_input.prefix + '.pp')
+            if os.path.isfile(fn):
+                f = file(fn)
+                test_input.ref_result = cPickle.load(f)
+                f.close()
+            else:
+                test_input.ref_result = None
 
     def _with_dependencies(self, original):
         with_deps = set([])
@@ -116,15 +74,15 @@ class Runner(object):
         # know which jobs are going to be executed. Then we can copy only the
         # input files needed for this run, and we can give decent progress info.
         # It also gives us the opportunity to sort the jobs from slow to fast.
-        original = set(self._test_inputs)
+        original = set(self.test_inputs)
         extra = self._with_dependencies(original) - original
-        for test_input in extra:
-            self._add_test_input(test_input)
-        print '... Total number of jobs: %i' % len(self._test_inputs)
+        self.load_references(extra)
+        self.test_inputs.extend(extra)
+        print '... Total number of jobs: %i' % len(self.test_inputs)
 
     def sort_test_inputs(self):
         # First compute the timing including the dependencies.
-        for test_input in self._test_inputs:
+        for test_input in self.test_inputs:
             # Collect all direct and indirect dependencies and the job itself.
             with_deps = self._with_dependencies([test_input])
             sort_key = 0.0
@@ -145,14 +103,14 @@ class Runner(object):
                 return -1
             else:
                 return cmp(ti1.sort_key, ti2.sort_key)
-        self._test_inputs.sort(compare, reverse=True)
+        self.test_inputs.sort(compare, reverse=True)
 
     def copy_inputs(self):
         print '... copying inputs and related files.'
         # Copy only the input files needed to run this batch of tests.
         # - Fist make a complete list of paths, including the extra_inputs
         all_paths = set([])
-        for test_input in self._test_inputs:
+        for test_input in self.test_inputs:
             all_paths.add(test_input.prefix + '.inp')
             for extra_path in test_input.extra_paths:
                 all_paths.add(extra_path)
@@ -169,8 +127,8 @@ class Runner(object):
         # Write the Makefile.
         print '... Creating makefile for test jobs.'
         f = file(os.path.join(self.config.tstdir, 'Makefile'), 'w')
-        print >> f, 'all: %s' % (' '.join(test_input.prefix + '.out' for test_input in self._test_inputs))
-        for test_input in self._test_inputs:
+        print >> f, 'all: %s' % (' '.join(test_input.prefix + '.out' for test_input in self.test_inputs))
+        for test_input in self.test_inputs:
             print >> f, '%s: %s' % (
                 test_input.prefix + '.out',
                 ' '.join(depend.prefix + '.out' for depend in test_input.depends)
@@ -200,7 +158,7 @@ class Runner(object):
         print 'Prog   Flags    CP2K  Script Test prefix'
         print '~~~~ ~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         p = subprocess.Popen(args, 1, stdout=subprocess.PIPE, cwd=self.config.tstdir)
-        total = len(self._test_inputs)
+        total = len(self.test_inputs)
         counter = 0
         while True:
             line = p.stdout.readline()
@@ -216,7 +174,7 @@ class Runner(object):
 
     def collect_test_results(self):
         print '... Collecting test results.'
-        for test_input in self._test_inputs:
+        for test_input in self.test_inputs:
             f = file(os.path.join(self.config.tstdir, test_input.prefix + '.pp'))
             test_input.tst_result = cPickle.load(f)
             f.close()

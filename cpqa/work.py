@@ -24,7 +24,20 @@ import os, shutil, random
 from cpqa import TestInput
 
 
-__all__ = ['Work']
+__all__ = ['Work', 'LastWork']
+
+
+def find_inputs(indir):
+    test_inputs = []
+    for root, dirnames, filenames in os.walk(indir):
+        for fn in filenames:
+            if fn.endswith('.inp'):
+                fn = os.path.join(root, fn)
+                prefix = fn[len(indir)+1:-4]
+                test_input = TestInput(fn, prefix)
+                if test_input.active:
+                    test_inputs.append(test_input)
+    return test_inputs
 
 
 class Work(object):
@@ -45,15 +58,7 @@ class Work(object):
         if not os.path.isfile(config.lastlink):
             os.symlink(config.tstdir, config.lastlink)
         # Make a list of all test input files.
-        self.test_inputs = []
-        for root, dirnames, filenames in os.walk(self.config.indir):
-            for fn in filenames:
-                if fn.endswith('.inp'):
-                    fn = os.path.join(root, fn)
-                    prefix = fn[len(self.config.indir)+1:-4]
-                    test_input = TestInput(fn, prefix)
-                    if test_input.active:
-                        self.test_inputs.append(test_input)
+        self.test_inputs = find_inputs(config.indir)
         # Translate the dependency strings into dependency test_inputs.
         lookup = dict((test_input.prefix, test_input) for test_input in self.test_inputs)
         for test_input in self.test_inputs:
@@ -62,3 +67,16 @@ class Work(object):
             assert test_input not in test_input.depends
         # Random order
         random.shuffle(self.test_inputs)
+
+
+class LastWork(object):
+    def __init__(self, config):
+        self.config = config
+        print '... Checking work tree.'
+        # Setup a few directories
+        if not os.path.isdir(config.indir):
+            raise IOError('Input directory "%s" is not present.' % config.indir)
+        if not os.path.isdir(config.tstdir):
+            raise IOError('Test directory "%s" is not present.' % config.tstdir)
+        # Make a list of all test input files.
+        self.test_inputs = find_inputs(config.tstdir)

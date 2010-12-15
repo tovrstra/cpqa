@@ -39,7 +39,7 @@ def log_txt(runner, timer, f=None):
     print >> f, 'Disk usage in tst-... [Mb]: %.2f' % (runner.tstsize/1048576.0)
 
     # Extended overview
-    for test_input in runner._test_inputs:
+    for test_input in runner.test_inputs:
         result = test_input.tst_result
         if not result.flags['ok']:
             print >> f, '~'*80
@@ -85,7 +85,7 @@ def log_txt(runner, timer, f=None):
 
     # Short summary
     counters = {}
-    for test_input in runner._test_inputs:
+    for test_input in runner.test_inputs:
         result = test_input.tst_result
         for key in result.flags:
             counters[key] = result.flags[key] + counters.get(key, 0)
@@ -96,7 +96,7 @@ def log_txt(runner, timer, f=None):
         else:
             value_str = '    -'
         print >> f, ' %1s %10s %5s' % (key[0].upper(), key.upper(), value_str)
-    print >> f, '   %10s %5i' % ('TOTAL', len(runner._test_inputs))
+    print >> f, '   %10s %5i' % ('TOTAL', len(runner.test_inputs))
     print >> f, '='*80
 
     if do_close:
@@ -144,7 +144,7 @@ def log_html(runner, timer):
         print >> f, '<tr><th>Faster than</th><td>%.2fs</td></tr>' % config.faster_than
     if config.slower_than is not None:
         print >> f, '<tr><th>Slower than</th><td>%.2fs</td></tr>' % config.slower_than
-    print >> f, '<tr><th>Number of test jobs</th><td>%i</td></tr>' % len(runner._test_inputs)
+    print >> f, '<tr><th>Number of test jobs</th><td>%i</td></tr>' % len(runner.test_inputs)
     print >> f, '<tr><th>Total wall time [s]</th><td>%.2f</td></tr>' % timer.seconds
     print >> f, '</table>'
 
@@ -152,7 +152,7 @@ def log_html(runner, timer):
     print >> f, '<table>'
     print >> f, '<tr><th>Flag</th><th>Label</th><th>Count</th></tr>'
     counters = {}
-    for test_input in runner._test_inputs:
+    for test_input in runner.test_inputs:
         result = test_input.tst_result
         for key in result.flags:
             counters[key] = result.flags[key] + counters.get(key, 0)
@@ -162,11 +162,11 @@ def log_html(runner, timer):
         else:
             value_str = '-'
         print >> f, '<tr><td>%1s</td><td>%10s</td><td>%s</td></tr>' % (key[0].upper(), key.upper(), value_str)
-    print >> f, '<tr><td>&nbsp;</td><td>%10s</td><td>%i</td></tr>' % ('TOTAL', len(runner._test_inputs))
+    print >> f, '<tr><td>&nbsp;</td><td>%10s</td><td>%i</td></tr>' % ('TOTAL', len(runner.test_inputs))
     print >> f, '</table>'
 
     print >> f, '<h2>Regressions</h2>'
-    for test_input in runner._test_inputs:
+    for test_input in runner.test_inputs:
         result = test_input.tst_result
         if not result.flags['ok']:
             print >> f, '<h3>%s</h3>' % test_input.prefix
