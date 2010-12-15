@@ -27,7 +27,7 @@ from cpqa import Config, compile_cp2k, Work, Runner, log_txt, log_html, Timer, \
     import_main
 
 
-usage = """Usage: %prog [input1.inp input2.inp ...] [directory1 directory2 ...] [fast:n|slow:n]
+usage = """Usage: %prog [options] [input1.inp input2.inp ...] [directory1 directory2 ...] [fast:n|slow:n]
 
 The order of the command line arguments does not matter. If no arguments are
 given, all tests are executed.
