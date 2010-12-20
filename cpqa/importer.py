@@ -117,7 +117,7 @@ def import_main(config):
         if test_index >= 0:
             regex, column = test_types[test_index].split('!')
             print >> f_dst, '#CPQA TEST SINGLE-VALUE \'%s\' %i' % (
-               regex.replace('|', '\|'), int(column) - 1
+               regex.replace('|', '\|').replace('(', '\(').replace(')', '\)'), int(column) - 1
             )
         resets = reset_info.get(os.path.join(test_dir, test_input), [])
         for reset in resets:
