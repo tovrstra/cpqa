@@ -110,30 +110,23 @@ def import_main(config):
             os.makedirs(dst_test_dir)
         f_src = file(os.path.join(src_test_dir, test_input), 'r')
         f_dst = file(os.path.join(dst_test_dir, test_input), 'w')
-        # Just something to make sure the test gets picked up.
-        # TODO: only do these if there are no other CPQA flags.
-        print >> f_dst, '#CPQA FOO'
-        # More serious directives
-        if test_index >= 0:
-            regex, column = test_types[test_index].split('!')
-            print >> f_dst, '#CPQA TEST SINGLE-VALUE \'%s\' %i' % (
-               regex.replace('|', '\|').replace('(', '\(').replace(')', '\)'), int(column) - 1
-            )
-        resets = reset_info.get(os.path.join(test_dir, test_input), [])
-        for reset in resets:
-            print >> f_dst, '#CPQA RESET', reset[0]
-            for line in reset[1:]:
-                print >> f_dst, '#          ', line
+        if not is_converted(f_src):
+            # Mark converted inputs.
+            print >> f_dst, '#CPQA CONVERTED'
+            # More serious directives
+            if test_index >= 0:
+                regex, column = test_types[test_index].split('!')
+                print >> f_dst, '#CPQA TEST SINGLE-VALUE \'%s\' %i' % (
+                   regex.replace('|', '\|').replace('(', '\(').replace(')', '\)'), int(column) - 1
+                )
+            resets = reset_info.get(os.path.join(test_dir, test_input), [])
+            for reset in resets:
+                print >> f_dst, '#CPQA RESET', reset[0]
+                for line in reset[1:]:
+                    print >> f_dst, '#          ', line
         # Copy of the actual test input
         for line in f_src:
             print >> f_dst, line[:-1]
-            #if len(words) == 2 and 'FILE' in words[0] and 'FORMAT' not in words[0] and \
-            #   not os.path.exists(os.path.join(src_test_dir, words[1])) and not '__STD_OUT__' in words[1]:
-            #    dep_path = os.path.join(test_dir, words[1])
-            #    dep_path = os.path.normpath(dep_path)
-            #    print os.path.join(test_dir, test_input),
-            #    print words[0],
-            #    print dep_path
         f_src.close()
         f_dst.close()
         # Get the extra paths
@@ -155,3 +148,13 @@ def import_main(config):
             shutil.copy(src_extra_path, dst_extra_dir)
         else:
             shutil.copytree(src_extra_path, dst_extra_path)
+
+
+def is_converted(f):
+    result = False
+    for line in f:
+        if line.strip() == '#CPQA CONVERTED':
+            result = True
+            break
+    f.seek(0)
+    return result
