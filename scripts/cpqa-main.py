@@ -52,11 +52,14 @@ def main():
     options, args = parse_args()
     # Measure the total wall-time
     timer = Timer()
-    # Load the configuration (from config.py file and from command line args).
+    # Load the configuration (from config.py file).
     config = Config(args)
     # Optionally import tests from the source tree.
     if options.do_import:
         import_main(config)
+    # Parse the command line after the import to check the presence of the
+    # selected inputs
+    config.parse_args()
     # Initialize the working directory.
     work = Work(config)
     # Try to compile CP2K

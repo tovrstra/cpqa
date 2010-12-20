@@ -74,15 +74,15 @@ class Config(object):
         self.refdir = 'ref--%s' % self.bintag
         self.tstdir = 'tst--%s' % self.runtag
         self.indir = 'in'
-        # Get command line args for test selection
-        self.parse_args(args)
+        # Store command line args for test selection
+        self.args = args
 
-    def parse_args(self, args):
+    def parse_args(self):
         self.select_dirs = []
         self.select_prefixes = []
         self.faster_than = None
         self.slower_than = None
-        for arg in args:
+        for arg in self.args:
             if os.path.isfile(arg):
                 arg = arg[len(self.indir)+1:-4]
                 self.select_prefixes.append(arg)

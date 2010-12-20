@@ -146,6 +146,7 @@ def main():
     options, args = parse_args()
     # Load the configuration (from config.py file and from command line args).
     config = Config(args, use_last=True)
+    config.parse_args()
     # Get the list of failed tests during the last run
     different = get_different(config)
     # Get the confirmation that this needs to be done.
