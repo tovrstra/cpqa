@@ -51,6 +51,12 @@ class TestInput(object):
                 elif line.startswith('DEPENDS '):
                     line = line[8:].strip()
                     self.depends.append(os.path.join(os.path.dirname(prefix), line[:-4]))
+                elif line.startswith('INCLUDE '):
+                    extra_input = line[8:].strip()
+                    dirname = os.path.dirname(prefix)
+                    extra_path = os.path.join(dirname, extra_input)
+                    extra_path = os.path.normpath(extra_path)
+                    self.extra_paths.append(extra_path)
             else:
                 words = line.split()
                 if len(words) == 2 and len(words[1]) > 1 and words[1] != '..':
