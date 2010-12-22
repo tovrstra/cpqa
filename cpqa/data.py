@@ -27,6 +27,44 @@ from cpqa.tests import test_factories
 __all__ = ['TestInput', 'TestResult']
 
 
+def sniff_extra_inputs_line(fn, prefix, line):
+    '''Detect files that are referred to on a given input line.
+
+       *Arguments:*
+
+       fn
+            The file from which `line` is taken.
+       prefix
+            The prefix of the input file with respect to the root directory of
+            the tests.
+       line
+            The line to be searched for extra filenames
+
+       The return value is a list of extra paths relative to the root directory
+       of the cp2k tests.
+    '''
+    result = []
+    words = line.split()
+    for extra_input in words[1:]:
+        if len(extra_input) <= 1:
+            continue
+        if extra_input == '..':
+            continue
+        if (extra_input[0] == '"' and extra_input[-1] == '"') or \
+           (extra_input[0] == "'" and extra_input[-1] == "'"):
+            extra_input = extra_input[1:-1]
+        # extra_fn = filename where the extra input is currently to be found
+        extra_fn = os.path.join(os.path.dirname(fn), extra_input)
+        if os.path.isfile(extra_fn):
+            # Make sure none of the data has any traces of the 'in',
+            # 'ref-*' or 'tst-*' directory.
+            dirname = os.path.dirname(prefix)
+            extra_path = os.path.join(dirname, extra_input)
+            extra_path = os.path.normpath(extra_path)
+            result.append(extra_path)
+    return result
+
+
 class TestInput(object):
     def __init__(self, fn, prefix):
         self.fn = fn
@@ -58,20 +96,8 @@ class TestInput(object):
                     extra_path = os.path.normpath(extra_path)
                     self.extra_paths.append(extra_path)
             else:
-                words = line.split()
-                if len(words) == 2 and len(words[1]) > 1 and words[1] != '..':
-                    extra_input = words[1]
-                    if (extra_input[0] == '"' and extra_input[-1] == '"') or \
-                       (extra_input[0] == "'" and extra_input[-1] == "'"):
-                        extra_input = extra_input[1:-1]
-                    dirname = os.path.dirname(fn)
-                    if os.path.isfile(os.path.join(dirname, extra_input)):
-                        # Make sure none of the data has any traces of the 'in',
-                        # 'ref-*' or 'tst-*' directory.
-                        dirname = os.path.dirname(prefix)
-                        extra_path = os.path.join(dirname, extra_input)
-                        extra_path = os.path.normpath(extra_path)
-                        self.extra_paths.append(extra_path)
+                self.extra_paths.extend(sniff_extra_inputs_line(fn, prefix, line))
+
         f.close()
         for test in self.tests:
             for extra_input in test.extra_inputs:
