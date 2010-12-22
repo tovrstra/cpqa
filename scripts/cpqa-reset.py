@@ -149,6 +149,9 @@ def main():
     config.parse_args()
     # Get the list of failed tests during the last run
     different = get_different(config)
+    if len(different) == 0:
+        print 'No outputs with different values found. Quiting.'
+        sys.exit(1)
     # Get the confirmation that this needs to be done.
     if not get_confirmation(different):
         sys.exit(1)
