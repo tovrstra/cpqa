@@ -93,7 +93,7 @@ def get_different(config):
     # but that showed no other problems.
     different = []
     for test_input in test_inputs:
-        fn = os.path.join(config.tstdir, test_input.prefix + '.pp')
+        fn = os.path.join(config.tstdir, test_input.path_pp)
         if os.path.isfile(fn):
             f = file(fn)
             tst_result = cPickle.load(f)
@@ -112,7 +112,7 @@ def get_confirmation(different):
     print
     print 'The following tests will be reset:'
     for ti in different:
-        print ti.prefix
+        print ti.path_inp
     answer = raw_input('Do you want to proceed? [y/N]: ')
     return answer.lower() == 'y'
 
@@ -124,11 +124,11 @@ def do_reset(config, motivation, different):
     # to be modified, and which lines should be added to each file.
     todo = {}
     for ti in different:
-        dirname = os.path.dirname(ti.prefix)
-        inpname = os.path.basename(ti.prefix) + '.inp'
+        dirname = os.path.dirname(ti.path_inp)
+        fn_inp = os.path.basename(ti.path_inp)
         reset_file = os.path.join(config.cp2k_root, 'tests', dirname, 'TEST_FILES_RESET')
         l = todo.setdefault(reset_file, motivation)
-        l.append(inpname)
+        l.append(fn_inp)
     # Modify the files
     for fn, lines in todo.iteritems():
         f = open(fn, 'a')
@@ -137,8 +137,8 @@ def do_reset(config, motivation, different):
         f.close()
     # Give some useful feedback
     print
-    print '.. The appropriate TEST_FILES_RESET files were modified.'
-    print 'During the next test run (cpqa-main.py with default import),',
+    print 'The appropriate TEST_FILES_RESET files were modified.'
+    print 'During the next test run (cpqa-main.py with default import),'
     print 'the reference data of these tests will be reset.'
 
 

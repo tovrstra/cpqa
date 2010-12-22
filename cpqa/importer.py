@@ -99,11 +99,8 @@ def import_main(config):
         shutil.rmtree(config.indir)
 
     # Load inputs and transform them
-    extra_paths = set([])
+    paths_extra = set([])
     for test_dir, test_input, test_index in test_inputs:
-        if test_input.endswith('.restart'):
-            print 'Warning! Skipping: %s (fixme!)' % test_input
-            continue
         src_test_dir = os.path.join(config.cp2k_root, 'tests', test_dir)
         dst_test_dir = os.path.join(config.indir, test_dir)
         if not os.path.isdir(dst_test_dir):
@@ -133,24 +130,22 @@ def import_main(config):
         f_src.close()
         f_dst.close()
         # Get the extra paths
-        fn = os.path.join(src_test_dir, test_input)
-        prefix = os.path.join(test_dir, test_input)[:-4]
-        test_input = TestInput(fn, prefix)
-        for extra_path in test_input.extra_paths:
-            extra_paths.add(extra_path)
+        test_input = TestInput(os.path.join(config.cp2k_root, 'tests'), os.path.join(test_dir, test_input))
+        for path_extra in test_input.paths_extra:
+            paths_extra.add(path_extra)
 
     # Copy extra files needed by the inputs
-    for extra_path in extra_paths:
-        extra_dir = os.path.dirname(extra_path)
-        src_extra_path = os.path.join(config.cp2k_root, 'tests', extra_path)
-        dst_extra_path = os.path.join(config.indir, extra_path)
+    for path_extra in paths_extra:
+        extra_dir = os.path.dirname(path_extra)
+        src_path_extra = os.path.join(config.cp2k_root, 'tests', path_extra)
+        dst_path_extra = os.path.join(config.indir, path_extra)
         dst_extra_dir = os.path.join(config.indir, extra_dir)
         if not os.path.isdir(dst_extra_dir):
             os.makedirs(dst_extra_dir)
-        if os.path.isfile(src_extra_path):
-            shutil.copy(src_extra_path, dst_extra_dir)
+        if os.path.isfile(src_path_extra):
+            shutil.copy(src_path_extra, dst_extra_dir)
         else:
-            shutil.copytree(src_extra_path, dst_extra_path)
+            shutil.copytree(src_path_extra, dst_path_extra)
 
 
 def is_converted(f):

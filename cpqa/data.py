@@ -27,54 +27,38 @@ from cpqa.tests import test_factories
 __all__ = ['TestInput', 'TestResult']
 
 
-def sniff_extra_inputs_line(fn, prefix, line):
-    '''Detect files that are referred to on a given input line.
-
-       *Arguments:*
-
-       fn
-            The file from which `line` is taken.
-       prefix
-            The prefix of the input file with respect to the root directory of
-            the tests.
-       line
-            The line to be searched for extra filenames
-
-       The return value is a list of extra paths relative to the root directory
-       of the cp2k tests.
-    '''
-    result = []
-    words = line.split()
-    for extra_input in words[1:]:
-        if len(extra_input) <= 1:
-            continue
-        if extra_input == '..':
-            continue
-        if (extra_input[0] == '"' and extra_input[-1] == '"') or \
-           (extra_input[0] == "'" and extra_input[-1] == "'"):
-            extra_input = extra_input[1:-1]
-        # extra_fn = filename where the extra input is currently to be found
-        extra_fn = os.path.join(os.path.dirname(fn), extra_input)
-        if os.path.isfile(extra_fn):
-            # Make sure none of the data has any traces of the 'in',
-            # 'ref-*' or 'tst-*' directory.
-            dirname = os.path.dirname(prefix)
-            extra_path = os.path.join(dirname, extra_input)
-            extra_path = os.path.normpath(extra_path)
-            result.append(extra_path)
-    return result
-
-
 class TestInput(object):
-    def __init__(self, fn, prefix):
-        self.fn = fn
-        self.prefix = prefix
+    def __init__(self, root, path_inp):
+        '''
+           *Arguments:*
+
+           root
+                The root directory in which the test resides.
+
+           path_inp
+                The path to the test input relative to the root directory.
+        '''
+        self.root = root
+        self.path_inp = path_inp
         self.active = False
         self.num_resets = 0
         self.tests = []
         self.depends = []
-        self.extra_paths = []
-        f = open(fn)
+        self.paths_extra = []
+        # related to input path
+        if path_inp.endswith('.inp'):
+            pre = path_inp[:-4]
+        elif path_inp.endswith('.restart'):
+            pre = path_inp[:-8]
+        else:
+            pre = path_inp
+        self.path_pp = pre + '.pp'
+        self.path_out = pre + '.out'
+        self.path_stdout = pre + '.stdout'
+        self.path_stderr = pre + '.stderr'
+
+        dirname = os.path.join(os.path.dirname(path_inp))
+        f = open(os.path.join(root, path_inp))
         for line in f:
             if line.startswith('#CPQA '):
                 line = line[6:].strip()
@@ -87,37 +71,51 @@ class TestInput(object):
                     key = words[0].lower()
                     self.tests.append(test_factories[key](words[1:]))
                 elif line.startswith('DEPENDS '):
-                    line = line[8:].strip()
-                    self.depends.append(os.path.join(os.path.dirname(prefix), line[:-4]))
+                    fn_depends = line[8:].strip()
+                    path_depends = os.path.join(dirname, fn_depends)
+                    path_depends = os.path.normpath(path_depends)
+                    self.depends.append(path_depends)
                 elif line.startswith('INCLUDE '):
-                    extra_input = line[8:].strip()
-                    dirname = os.path.dirname(prefix)
-                    extra_path = os.path.join(dirname, extra_input)
-                    extra_path = os.path.normpath(extra_path)
-                    self.extra_paths.append(extra_path)
+                    fn_extra = line[8:].strip()
+                    path_extra = os.path.join(dirname, fn_extra)
+                    path_extra = os.path.normpath(path_extra)
+                    self.paths_extra.append(path_extra)
             else:
-                self.extra_paths.extend(sniff_extra_inputs_line(fn, prefix, line))
+                words = line.split()
+                for fn_extra in words[1:]:
+                    if len(fn_extra) <= 1:
+                        continue
+                    if fn_extra == '..':
+                        continue
+                    if (fn_extra[0] == '"' and fn_extra[-1] == '"') or \
+                       (fn_extra[0] == "'" and fn_extra[-1] == "'"):
+                        fn_extra = fn_extra[1:-1]
+                    if os.path.isfile(os.path.join(root, dirname, fn_extra)):
+                        # Make sure none of the data has any traces of the 'in',
+                        # 'ref-*' or 'tst-*' directory.
+                        path_extra = os.path.join(dirname, fn_extra)
+                        path_extra = os.path.normpath(path_extra)
+                        self.paths_extra.append(path_extra)
 
         f.close()
         for test in self.tests:
-            for extra_input in test.extra_inputs:
-                dirname = os.path.dirname(prefix)
-                extra_path = os.path.join(dirname, extra_input)
-                extra_path = os.path.normpath(extra_path)
-                self.extra_paths.append(extra_path)
+            for fn_extra in test.fns_extra:
+                path_extra = os.path.join(dirname, fn_extra)
+                path_extra = os.path.normpath(path_extra)
+                self.paths_extra.append(path_extra)
 
 
 class TestResult(object):
-    def __init__(self, prefix, flags, seconds_cp2k, seconds, tests, messages,
-                 last_out_lines, last_o_lines, last_e_lines):
-        self.prefix = prefix
+    def __init__(self, path_inp, flags, seconds_cp2k, seconds, tests,
+                 messages, last_out_lines, last_stdout_lines, last_stderr_lines):
+        self.path_inp = path_inp
         self.flags = flags
         self.seconds_cp2k = seconds_cp2k
         self.seconds = seconds
         self.tests = tests
         self.messages = messages
         self.last_out_lines = last_out_lines
-        self.last_o_lines = last_o_lines
-        self.last_e_lines = last_e_lines
+        self.last_stdout_lines = last_stdout_lines
+        self.last_stderr_lines = last_stderr_lines
         # derived
         self.seconds_script = seconds - seconds_cp2k

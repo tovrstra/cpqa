@@ -37,18 +37,18 @@ def parse_args():
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
     if len(args) == 3:
-        cp2k_bin, tstpath, refdir = args
+        cp2k_bin, path_inp, refdir = args
         mpi_prefix = ''
     elif len(args) == 4:
-        cp2k_bin, tstpath, refdir, mpi_prefix = args
+        cp2k_bin, path_inp, refdir, mpi_prefix = args
     else:
         raise TypeError('Excpecting three or four arguments.')
     if not os.path.isfile(cp2k_bin):
         raise ValueError('CP2K binary "%s" not found.' % args[0])
-    return cp2k_bin, tstpath, refdir, mpi_prefix
+    return cp2k_bin, path_inp, refdir, mpi_prefix
 
 
-def print_log_line(tstpath, flags, sec_cp2k, sec_all):
+def print_log_line(path_inp, flags, sec_cp2k, sec_all):
     print "CPQA-PREFIX",
     tag = ''
     for key, value in sorted(flags.iteritems()):
@@ -59,55 +59,61 @@ def print_log_line(tstpath, flags, sec_cp2k, sec_all):
     print tag,
     print '%6.2f' % sec_cp2k,
     print '%6.2f' % (sec_all-sec_cp2k),
-    print tstpath
+    print path_inp
+
+
+def run_cp2k(cp2k_bin, mpi_prefix, test_input):
+    dirname, fn_inp = os.path.split(test_input.path_inp)
+    fn_out = os.path.basename(test_input.path_out)
+    fn_stdout = os.path.basename(test_input.path_stdout)
+    fn_stderr = os.path.basename(test_input.path_stderr)
+    command = 'cd ./%s; %s %s -i %s -o %s > %s 2> %s' % (
+        dirname, mpi_prefix, cp2k_bin, fn_inp, fn_out, fn_stdout, fn_stderr
+    )
+    timer_cp2k = Timer()
+    retcode = os.system(command)
+    timer_cp2k.stop()
+    return retcode, timer_cp2k
 
 
 def main():
     timer_all = Timer()
     # Get command line arguments
-    cp2k_bin, tstpath, refdir, mpi_prefix = parse_args()
+    cp2k_bin, path_inp, refdir, mpi_prefix = parse_args()
+    test_input = TestInput('./', path_inp)
+    refdir = os.path.join('..', refdir)
     # Flags to display the status of the test.
     flags = {}
     # To record error messages of this script:
     messages = []
     # Run cp2k
-    tstdir, prefix = os.path.split(tstpath)
-    command = 'cd ./%s; %s %s -i %s.inp -o %s.out > %s.o 2> %s.e' % (tstdir,
-        mpi_prefix, cp2k_bin, prefix, prefix, prefix, prefix)
-    timer_cp2k = Timer()
-    retcode = os.system(command)
-    timer_cp2k.stop()
+    retcode, timer_cp2k = run_cp2k(cp2k_bin, mpi_prefix, test_input)
     flags['failed'] = (retcode != 0)
     # Get the last 20 lines
-    last_out_lines = tail(os.path.join(tstdir, prefix + '.out'))
-    last_o_lines = tail(os.path.join(tstdir, prefix + '.o'))
-    last_e_lines = tail(os.path.join(tstdir, prefix + '.e'))
-    flags['verbose'] = len(last_e_lines) > 0 or len(last_o_lines) > 0
+    last_out_lines = tail(test_input.path_out)
+    last_stdout_lines = tail(test_input.path_stdout)
+    last_stderr_lines = tail(test_input.path_stderr)
+    flags['verbose'] = len(last_stderr_lines) > 0 or len(last_stdout_lines) > 0
     # Check on refdir
-    refdir = os.path.join('..', refdir, tstdir)
-    refpath = os.path.join(refdir, prefix)
-    flags['new'] = not os.path.isfile(refpath + '.pp')
+    flags['new'] = not os.path.isfile(os.path.join(refdir, test_input.path_pp))
     # Extract the tests and count the number of resets
-    test_input_tst = TestInput(tstpath + '.inp', tstpath)
-    num_resets_tst = test_input_tst.num_resets
-    tests = test_input_tst.tests
     if flags['new']:
-        num_resets_ref = num_resets_tst
+        num_resets_ref = test_input.num_resets
     else:
-        test_input_ref = TestInput(refpath + '.inp', tstpath)
+        test_input_ref = TestInput(refdir, path_inp)
         num_resets_ref = test_input_ref.num_resets
-    flags['reset'] = (num_resets_tst > num_resets_ref)
+    flags['reset'] = (test_input.num_resets > num_resets_ref)
     flags['error'] = False
-    if num_resets_tst < num_resets_ref:
+    if test_input.num_resets < num_resets_ref:
         flags['error'] = True
         messages.append('Error: The number of reset directives decreased.')
     # Collect fragments from output for tests.
     flags['missing'] = False
-    harvest_test(tstpath, refpath, tests, flags['new'], messages)
+    harvest_test(test_input, refdir, flags['new'], messages)
     # Do the actual tests.
     flags['wrong'] = False
     flags['different'] = False
-    for test in tests:
+    for test in test_input.tests:
         if not test.complete(flags['new']):
             flags['missing'] = True
         else:
@@ -127,20 +133,26 @@ def main():
                   flags['error'])
     # Write the TestResult to a pickle file
     timer_all.stop()
-    test_result = TestResult(prefix, flags, timer_cp2k.seconds,
-        timer_all.seconds, tests, messages, last_out_lines, last_o_lines,
-        last_e_lines)
-    f = open(tstpath + '.pp', 'w')
+    test_result = TestResult(
+        path_inp, flags, timer_cp2k.seconds, timer_all.seconds,
+        test_input.tests, messages, last_out_lines, last_stdout_lines,
+        last_stderr_lines
+    )
+    f = open(test_input.path_pp, 'w')
     cPickle.dump(test_result, f, -1)
     f.close()
     # Copy the tests to the reference directory if needed.
     if (flags['new'] or flags['reset']) and flags['ok']:
-        if not os.path.isdir(refdir):
-            os.makedirs(refdir)
-        for suffix in '.inp', '.out', '.pp':
-            shutil.copy(tstpath + suffix, refpath + suffix)
+        dstdir = os.path.join(refdir, os.path.dirname(test_input.path_pp))
+        if not os.path.isdir(dstdir):
+            os.makedirs(dstdir)
+        shutil.copy(path_inp, dstdir)
+        shutil.copy(test_input.path_out, dstdir)
+        shutil.copy(test_input.path_pp, dstdir)
+        shutil.copy(test_input.path_stderr, dstdir)
+        shutil.copy(test_input.path_stdout, dstdir)
     # Print some screen output.
-    print_log_line(tstpath, flags, timer_cp2k.seconds, timer_all.seconds)
+    print_log_line(path_inp, flags, timer_cp2k.seconds, timer_all.seconds)
 
 
 

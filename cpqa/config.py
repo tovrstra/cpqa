@@ -79,13 +79,13 @@ class Config(object):
 
     def parse_args(self):
         self.select_dirs = []
-        self.select_prefixes = []
+        self.select_paths_inp = []
         self.faster_than = None
         self.slower_than = None
         for arg in self.args:
             if os.path.isfile(arg):
-                arg = arg[len(self.indir)+1:-4]
-                self.select_prefixes.append(arg)
+                arg = arg[len(self.indir)+1:]
+                self.select_paths_inp.append(arg)
             elif os.path.isdir(arg):
                 arg = arg[len(self.indir)+1:]
                 self.select_dirs.append(arg)
@@ -102,19 +102,19 @@ class Config(object):
 
     def filter_inputs_name(self, test_inputs):
         result = []
-        if len(self.select_prefixes) > 0 or len(self.select_dirs) > 0:
+        if len(self.select_paths_inp) > 0 or len(self.select_dirs) > 0:
             print '... Making selection of inputs (based on names).'
             for test_input in test_inputs:
                 done = False
-                for select_prefix in self.select_prefixes:
-                    if test_input.prefix == select_prefix:
+                for select_path_inp in self.select_paths_inp:
+                    if test_input.path_inp == select_path_inp:
                         result.append(test_input)
                         done = True
                         break
                 if done:
                     continue
                 for select_dir in self.select_dirs:
-                    if test_input.prefix.startswith(select_dir):
+                    if test_input.path_inp.startswith(select_dir):
                         result.append(test_input)
                         break
         else:

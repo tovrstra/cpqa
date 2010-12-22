@@ -105,21 +105,24 @@ class ArrayFragment(Fragment):
             self.data = None
 
 
-def harvest_test(tstpath, refpath, tests, new, messages):
+def harvest_test(test_input, refdir, new, messages):
     if not new:
-        harvest_file(refpath + '.out', [test.ref for test in tests if hasattr(test, 'ref')], messages)
-    harvest_file(tstpath + '.out', [test.tst for test in tests if hasattr(test, 'tst')], messages)
-    for test in tests:
+        path_out = os.path.join(refdir, test_input.path_out)
+        fragments = [test.ref for test in test_input.tests if hasattr(test, 'ref')]
+        harvest_file(path_out, fragments, messages)
+    fragments = [test.tst for test in test_input.tests if hasattr(test, 'tst')]
+    harvest_file(test_input.path_out, fragments, messages)
+    for test in test_input.tests:
         try:
-            test.harvest_other(tstpath, messages)
+            test.harvest_other(test_input, messages)
         except Exception, e:
             messages.append(traceback.format_exc())
 
 
-def harvest_file(outfn, fragments, messages):
-    if not os.path.isfile(outfn):
+def harvest_file(path_out, fragments, messages):
+    if not os.path.isfile(path_out):
         return
-    f = file(outfn)
+    f = file(path_out)
     for line in f:
         for fragment in fragments:
             fragment.feed(line)
@@ -133,19 +136,19 @@ def harvest_file(outfn, fragments, messages):
 
 
 class Test(object):
-    def __init__(self, directive, extra_inputs=None):
+    def __init__(self, directive, fns_extra=None):
         self.directive = directive
         self.wrong = None
         self.different = None
-        if extra_inputs is None:
-            self.extra_inputs = []
+        if fns_extra is None:
+            self.fns_extra = []
         else:
-            self.extra_inputs = extra_inputs
+            self.fns_extra = fns_extra
 
     def get_command(self):
         raise NotImplementedError
 
-    def harvest_other(self, tstpath, messages):
+    def harvest_other(self, test_input, messages):
         pass
 
     def complete(self, new):
@@ -262,8 +265,9 @@ class CompareScalarTest(ScalarTest):
             self.threshold
         )
 
-    def harvest_other(self, tstpath, messages):
-        expfn = os.path.join(os.path.dirname(tstpath), self.exp_prefix) + '.out'
+    def harvest_other(self, test_input, messages):
+        dirname = os.path.dirname(test_input.path_inp)
+        expfn = os.path.join(dirname, self.exp_prefix) + '.out'
         harvest_file(expfn, [self.exp], messages)
 
     def complete(self, new):
@@ -293,8 +297,8 @@ class ScriptTest(Test):
     def get_command(self):
         return '%s \'%s\' %s' % (self.directive.upper(), self.script, ' '.join(self.args))
 
-    def harvest_other(self, tstpath, messages):
-        self.dirname = os.path.dirname(tstpath)
+    def harvest_other(self, test_input, messages):
+        self.dirname = os.path.dirname(test_input.path_inp)
 
     def complete(self, new):
         return True
@@ -303,22 +307,22 @@ class ScriptTest(Test):
         log_prefix = self.args[0] + '-' + self.script
         if len(self.args) > 1:
             log_prefix += '-' + '-'.join(self.args[1:])
-        self.return_code = os.system('cd %s; ./%s %s > %s.o 2> %s.e' % (
+        self.return_code = os.system('cd %s; ./%s %s > %s.stdout 2> %s.stderr' % (
             self.dirname, self.script, ' '.join(self.args), log_prefix, log_prefix
         ))
         self.wrong = self.return_code != 0
         if self.wrong is True:
-            self.last_o_lines = tail(os.path.join(self.dirname, log_prefix + '.o'))
-            self.last_e_lines = tail(os.path.join(self.dirname, log_prefix + '.e'))
+            self.last_stdout_lines = tail(os.path.join(self.dirname, log_prefix + '.stdout'))
+            self.last_stderr_lines = tail(os.path.join(self.dirname, log_prefix + '.stderr'))
 
     def log_txt(self, f):
         if self.wrong is True:
             print >> f, '    Script ended with return code %i' % self.return_code
             print >> f, '   ----- last 20 lines of standard output of the script -----'
-            for line in self.last_o_lines:
+            for line in self.last_stdout_lines:
                 print >> f, line
             print >> f, '   ----- last 20 lines of standard error of the script -----'
-            for line in self.last_e_lines:
+            for line in self.last_stderr_lines:
                 print >> f, line
 
     def log_html(self, f):
@@ -326,12 +330,12 @@ class ScriptTest(Test):
             print >> f, '<p>Script ended with return code %i</p>' % self.return_code
             print >> f, '<p>Last 20 lines of standard output of the script:</p>'
             print >> f, '<pre class="grey">'
-            for line in self.last_o_lines:
+            for line in self.last_stdout_lines:
                 print >> f, line
             print >> f, '</pre>'
             print >> f, '<p>Last 20 lines of standard error of the script:</p>'
             print >> f, '<pre class="grey">'
-            for line in self.last_e_lines:
+            for line in self.last_stderr_lines:
                 print >> f, line
             print >> f, '</pre>'
 

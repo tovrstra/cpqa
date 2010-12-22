@@ -43,7 +43,7 @@ def log_txt(runner, timer, f=None):
         result = test_input.tst_result
         if not result.flags['ok']:
             print >> f, '~'*80
-            print >> f, 'Problems with %s.inp' % test_input.prefix
+            print >> f, 'Problems with %s' % test_input.path_inp
             if result.flags['error']:
                 print >> f, ' * Something went wrong in the CPQA driver script.'
                 counter = 0
@@ -76,10 +76,10 @@ def log_txt(runner, timer, f=None):
             if result.flags['verbose']:
                 print >> f, ' * CP2K gave some standard output/error.'
                 print >> f, '   ----- last 20 lines of standard output -----'
-                for line in result.last_o_lines:
+                for line in result.last_stdout_lines:
                     print >> f, line
                 print >> f, '   ----- last 20 lines of standard error -----'
-                for line in result.last_e_lines:
+                for line in result.last_stderr_lines:
                     print >> f, line
             print >> f, '~'*80
 
@@ -138,8 +138,8 @@ def log_html(runner, timer):
     print >> f, '<tr><th>Test directory</th><td>%s</td></tr>' % config.tstdir
     for select_dir in config.select_dirs:
         print >> f, '<tr><th>Select dir</th><td>%s</td></tr>' % select_dir
-    for select_prefix in config.select_prefixes:
-        print >> f, '<tr><th>Select prefix</th><td>%s</td></tr>' % select_prefix
+    for select_path_inp in config.select_paths_inp:
+        print >> f, '<tr><th>Select path inp</th><td>%s</td></tr>' % select_path_inp
     if config.faster_than is not None:
         print >> f, '<tr><th>Faster than</th><td>%.2fs</td></tr>' % config.faster_than
     if config.slower_than is not None:
@@ -169,8 +169,8 @@ def log_html(runner, timer):
     for test_input in runner.test_inputs:
         result = test_input.tst_result
         if not result.flags['ok']:
-            print >> f, '<h3>%s</h3>' % test_input.prefix
-            print >> f, '<p><a href=\'%s.out\'>%s.out</a></p>' % (test_input.prefix, test_input.prefix)
+            print >> f, '<h3>%s</h3>' % test_input.path_inp
+            print >> f, '<p><a href=\'%s\'>%s</a></p>' % (test_input.path_out, test_input.path_out)
             if result.flags['error']:
                 print >> f, '<p class="cat">Something went wrong in the CPQA driver script.</p>'
                 print >> f, '<ol>'
@@ -212,12 +212,12 @@ def log_html(runner, timer):
                 print >> f, '<p class="cat">CP2K gave some standard output/error.</p>'
                 print >> f, '<p>Last 20 lines of standard output:</p>'
                 print >> f, '<pre class="grey">'
-                for line in result.last_o_lines:
+                for line in result.last_stdout_lines:
                     print >> f, line
                 print >> f, '</pre>'
                 print >> f, '<p>Last 20 lines of standard error:</p>'
                 print >> f, '<pre class="grey">'
-                for line in result.last_e_lines:
+                for line in result.last_stderr_lines:
                     print >> f, line
                 print >> f, '</pre>'
 
@@ -269,22 +269,22 @@ def diff_html(f, old, new, oldname, newname):
 
 
 def diff_html_file(config, test_input):
-    f_ref = open(os.path.join(config.refdir, test_input.prefix + '.out'))
+    f_ref = open(os.path.join(config.refdir, test_input.path_out))
     ref_lines = f_ref.readlines()
     f_ref.close()
-    f_tst = open(os.path.join(config.tstdir, test_input.prefix + '.out'))
+    f_tst = open(os.path.join(config.tstdir, test_input.path_out))
     tst_lines = f_tst.readlines()
     f_tst.close()
 
-    f_html = open(os.path.join(config.tstdir, test_input.prefix + '.diff.html'), 'w')
+    f_html = open(os.path.join(config.tstdir, test_input.path_out + '.diff.html'), 'w')
     print '... Writing html log:', f_html.name
     print >> f_html, '<html><head>'
-    print >> f_html, '<title>Diff for %s</title>' % test_input.prefix
+    print >> f_html, '<title>Diff for %s</title>' % test_input.path_out
     print >> f_html, '<style type="text/css">%s</style>' % css
     print >> f_html, '</head><body>'
-    print >> f_html, '<h2>Diff for %s</h2>' % test_input.prefix
+    print >> f_html, '<h2>Diff for %s</h2>' % test_input.path_out
     diff_html(f_html, ref_lines, tst_lines, 'ref', 'tst')
     print >> f_html, '</body></html>'
     f_html.close()
 
-    return test_input.prefix + '.diff.html'
+    return test_input.path_out + '.diff.html'

@@ -45,7 +45,7 @@ class Runner(object):
     def load_references(self, test_inputs):
         # Try to get the reference results.
         for test_input in test_inputs:
-            fn = os.path.join(self.config.refdir, test_input.prefix + '.pp')
+            fn = os.path.join(self.config.refdir, test_input.path_pp)
             if os.path.isfile(fn):
                 f = file(fn)
                 test_input.ref_result = cPickle.load(f)
@@ -106,18 +106,18 @@ class Runner(object):
         self.test_inputs.sort(compare, reverse=True)
 
     def copy_inputs(self):
-        print '... copying inputs and related files.'
+        print '... Copying inputs and related files.'
         # Copy only the input files needed to run this batch of tests.
-        # - Fist make a complete list of paths, including the extra_inputs
+        # - First make a complete list of paths, including the extra_inputs
         all_paths = set([])
         for test_input in self.test_inputs:
-            all_paths.add(test_input.prefix + '.inp')
-            for extra_path in test_input.extra_paths:
-                all_paths.add(extra_path)
+            all_paths.add(test_input.path_inp)
+            for path_extra in test_input.paths_extra:
+                all_paths.add(path_extra)
         # - Then copy the stuff
         for path in all_paths:
-            dirname = os.path.dirname(path)
             src_path = os.path.join(self.config.indir, path)
+            dirname = os.path.dirname(path)
             dst_dir = os.path.join(self.config.tstdir, dirname)
             if not os.path.isdir(dst_dir):
                 os.makedirs(dst_dir)
@@ -127,21 +127,21 @@ class Runner(object):
         # Write the Makefile.
         print '... Creating makefile for test jobs.'
         f = file(os.path.join(self.config.tstdir, 'Makefile'), 'w')
-        print >> f, 'all: %s' % (' '.join(test_input.prefix + '.out' for test_input in self.test_inputs))
+        print >> f, 'all: %s' % (' '.join(test_input.path_out for test_input in self.test_inputs))
         for test_input in self.test_inputs:
             print >> f, '%s: %s' % (
-                test_input.prefix + '.out',
-                ' '.join(depend.prefix + '.out' for depend in test_input.depends)
+                test_input.path_out,
+                ' '.join(depend.path_out for depend in test_input.depends)
             )
             if self.config.mpi_prefix is None:
                 print >> f, '\tcpqa-driver.py %s %s %s' % (
                     os.path.abspath(self.config.cp2k_bin),
-                    test_input.prefix, self.config.refdir
+                    test_input.path_inp, self.config.refdir
                 )
             else:
                 print >> f, '\tcpqa-driver.py %s %s %s \'%s\'' % (
                     os.path.abspath(self.config.cp2k_bin),
-                    test_input.prefix, self.config.refdir,
+                    test_input.path_inp, self.config.refdir,
                     self.config.mpi_prefix
                 )
             print >> f
@@ -155,7 +155,7 @@ class Runner(object):
             nproc_make = self.config.nproc/self.config.nproc_mpi
         args = ['make', '-j', str(nproc_make)]
         print '~~~~ ~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print 'Prog   Flags    CP2K  Script Test prefix'
+        print 'Prog   Flags    CP2K  Script Test'
         print '~~~~ ~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         p = subprocess.Popen(args, 1, stdout=subprocess.PIPE, cwd=self.config.tstdir)
         total = len(self.test_inputs)
@@ -175,7 +175,7 @@ class Runner(object):
     def collect_test_results(self):
         print '... Collecting test results.'
         for test_input in self.test_inputs:
-            f = file(os.path.join(self.config.tstdir, test_input.prefix + '.pp'))
+            f = file(os.path.join(self.config.tstdir, test_input.path_pp))
             test_input.tst_result = cPickle.load(f)
             f.close()
 

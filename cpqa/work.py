@@ -21,7 +21,7 @@
 
 import os, shutil, random
 
-from cpqa import TestInput
+from cpqa.data import TestInput
 
 
 __all__ = ['Work', 'LastWork']
@@ -30,11 +30,10 @@ __all__ = ['Work', 'LastWork']
 def find_inputs(indir):
     test_inputs = []
     for root, dirnames, filenames in os.walk(indir):
-        for fn in filenames:
-            if fn.endswith('.inp'):
-                fn = os.path.join(root, fn)
-                prefix = fn[len(indir)+1:-4]
-                test_input = TestInput(fn, prefix)
+        for fn_inp in filenames:
+            if fn_inp.endswith('.inp') or fn_inp.endswith('.restart'):
+                path_inp = os.path.join(root[len(indir)+1:], fn_inp)
+                test_input = TestInput(indir, path_inp)
                 if test_input.active:
                     test_inputs.append(test_input)
     return test_inputs
@@ -60,7 +59,7 @@ class Work(object):
         # Make a list of all test input files.
         self.test_inputs = find_inputs(config.indir)
         # Translate the dependency strings into dependency test_inputs.
-        lookup = dict((test_input.prefix, test_input) for test_input in self.test_inputs)
+        lookup = dict((test_input.path_inp, test_input) for test_input in self.test_inputs)
         for test_input in self.test_inputs:
             test_input.depends = [lookup[depend] for depend in test_input.depends]
             # Just a quick check.
