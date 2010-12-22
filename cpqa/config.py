@@ -88,6 +88,8 @@ class Config(object):
                 self.select_paths_inp.append(arg)
             elif os.path.isdir(arg):
                 arg = arg[len(self.indir)+1:]
+                if arg[-1] != '/':
+                    arg += '/'
                 self.select_dirs.append(arg)
             elif arg.startswith('fast:'):
                 if self.faster_than is not None or self.slower_than is not None:
