@@ -19,7 +19,7 @@
 # --
 
 
-import os, subprocess, shutil, cPickle
+import os, subprocess, shutil, cPickle, copy
 
 from cpqa.shell import du
 
@@ -37,8 +37,9 @@ class Runner(object):
         self.select_dependencies()
         self.sort_test_inputs()
         self.copy_inputs()
-        self.create_makefile()
-        self.run_makefile()
+        #self.create_makefile()
+        #self.run_makefile()
+        self.run_tests()
         self.collect_test_results()
         self.get_disk_usage()
 
@@ -123,54 +124,67 @@ class Runner(object):
                 os.makedirs(dst_dir)
             shutil.copy(src_path, dst_dir)
 
-    def create_makefile(self):
-        # Write the Makefile.
-        print '... Creating makefile for test jobs.'
-        f = file(os.path.join(self.config.tstdir, 'Makefile'), 'w')
-        print >> f, 'all: %s' % (' '.join(test_input.path_out for test_input in self.test_inputs))
-        for test_input in self.test_inputs:
-            print >> f, '%s: %s' % (
-                test_input.path_out,
-                ' '.join(depend.path_out for depend in test_input.depends)
-            )
-            if self.config.mpi_prefix is None:
-                print >> f, '\tcpqa-driver.py %s %s %s' % (
-                    os.path.abspath(self.config.cp2k_bin),
-                    test_input.path_inp, self.config.refdir
-                )
-            else:
-                print >> f, '\tcpqa-driver.py %s %s %s \'%s\'' % (
-                    os.path.abspath(self.config.cp2k_bin),
-                    test_input.path_inp, self.config.refdir,
-                    self.config.mpi_prefix
-                )
-            print >> f
-        f.close()
-
-    def run_makefile(self):
-        print '... Running test jobs.'
+    def run_tests(self):
         if self.config.mpi_prefix is None:
-            nproc_make = self.config.nproc
+            max_task = self.config.nproc
         else:
-            nproc_make = self.config.nproc/self.config.nproc_mpi
-        args = ['make', '-j', str(nproc_make)]
+            max_task = self.config.nproc/self.config.nproc_mpi
+        todo = copy.copy(self.test_inputs)
+        running = {}
+        done = set([])
         print '~~~~ ~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print 'Prog   Flags    CP2K  Script Test'
         print '~~~~ ~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        p = subprocess.Popen(args, 1, stdout=subprocess.PIPE, cwd=self.config.tstdir)
-        total = len(self.test_inputs)
-        counter = 0
-        while True:
-            line = p.stdout.readline()
-            if len(line) == 0: break
-            if line.startswith('CPQA-PREFIX'):
-                counter += 1
-                percent = float(counter)/total*100
-                print '%3.0f%%' % percent, line[12:-1]
-        p.wait()
+        counter = 0.0
+        total = len(todo)
+        waiting = False # Indicate that we are currently waiting on dependencies
+        while len(todo) > 0 or len(running) > 0:
+            # If len(running)==max_task wait for a job to finnish
+            if len(running) >= max_task or len(todo) == 0 or waiting:
+                pid, retcode = os.wait()
+                p, test_input = running.pop(pid)
+                lines = p.stdout.readlines()
+                for line in lines:
+                    if line.startswith('CPQA-PREFIX'):
+                        counter += 1
+                        percent = float(counter)/total*100
+                        print '%3.0f%%' % percent, line[12:-1]
+                        break
+                done.add(test_input)
+            waiting = False
+            # Just continue if the todo list is empty
+            if len(todo) == 0:
+                continue
+            # Take a new test input. If none can be found, all todo items are
+            # waiting for dependencies.
+            test_input = None
+            for i in xrange(len(todo)):
+                accepted = True
+                for depend in todo[i].depends:
+                    if depend not in done:
+                        accepted = False
+                        break
+                if accepted:
+                     test_input = todo.pop(i)
+                     break
+            if test_input is None:
+                waiting = True
+                continue
+            # Launch the new job
+            if self.config.mpi_prefix is None:
+                args = [
+                    'cpqa-driver.py', os.path.abspath(self.config.cp2k_bin),
+                    test_input.path_inp, self.config.refdir
+                ]
+            else:
+                args = [
+                    'cpqa-driver.py', os.path.abspath(self.config.cp2k_bin),
+                    test_input.path_inp, self.config.refdir,
+                    self.config.mpi_prefix
+                ]
+            p = subprocess.Popen(args, cwd=self.config.tstdir, stdout=subprocess.PIPE)
+            running[p.pid] = (p, test_input)
         print '~~~~ ~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        if p.returncode != 0:
-            raise RuntimeError('CPQA could not run the tests.')
 
     def collect_test_results(self):
         print '... Collecting test results.'
