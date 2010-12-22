@@ -35,8 +35,8 @@ Additional features:
 - All information about a test is contained in the comments of the test input
   file. There is no need for the files TEST_FILES, TEST_FILES_RESET, and
   TEST_TYPES. This reduces the chance on patch collisions when multiple people
-  are resetting tests at the same time. An import script converts the CP2K test
-  directory into the a form that is suitable for CPQA.
+  are resetting tests at the same time. The CP2K test directory is converted
+  automatically into the a form that is suitable for CPQA.
 
 - The selection of test inputs can be provided on the command line of
   cpqa-main.py. One can specify individual inputs and/or entire directories. One
@@ -253,3 +253,22 @@ Also check out the script cpqa-reset.py that automates the larger part of
 resetting test files. It directly modifies the TEST_FILES_RESET in the CP2K
 source tree, which will be picked up by the importer in cpqa-main.py. This
 guarantees that the reseted tests are also picked up by the do_regtest script.
+
+
+Some basic heuristics are used to detect additional files that are used by a
+given input file. This is needed when importing the tests from the CP2K source
+tree and when copying the test inputs to a work directory. However, not all
+additional inputs can be detected properly for technical reasons. One may use
+the following directive to indicate that a test input requires another file to
+be present.
+
+#CPQA INCLUDE FILENAME.file
+
+The heuristic algorithm works as follows:
+
+1) Every input line is split into words separated by white space.
+2) The first word is ignored. The following words are considered to be potential
+   additional inputs
+3) For each potential additional inputs, surrounding accents are stripped and
+   it is tested if the file actually exists. If it exists, it is added to the
+   list of extra inputs.
