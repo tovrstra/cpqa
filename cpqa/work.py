@@ -27,15 +27,34 @@ from cpqa.data import TestInput
 __all__ = ['Work', 'LastWork']
 
 
+def is_binary(filename):
+    """Return true if the given filename is binary."""
+    f = open(filename, 'rb')
+    try:
+        while 1:
+            chunk = f.read(1024)
+            if '\0' in chunk: # found null byte
+                return True
+            if len(chunk) < 1024:
+                break # done
+    finally:
+        f.close()
+    return False
+
+
 def find_inputs(indir):
     test_inputs = []
     for root, dirnames, filenames in os.walk(indir):
         for fn_inp in filenames:
-            if fn_inp.endswith('.inp') or fn_inp.endswith('.restart'):
-                path_inp = os.path.join(root[len(indir)+1:], fn_inp)
-                test_input = TestInput(indir, path_inp)
-                if test_input.active:
-                    test_inputs.append(test_input)
+            if not (fn_inp.endswith('.inp') or fn_inp.endswith('.restart')):
+                continue
+            path_inp = os.path.join(root[len(indir)+1:], fn_inp)
+            if is_binary(os.path.join(indir, path_inp)):
+                continue
+            test_input = TestInput(indir, path_inp)
+            if not test_input.active:
+                continue
+            test_inputs.append(test_input)
     return test_inputs
 
 
