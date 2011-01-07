@@ -170,6 +170,42 @@ Usage
    If things go wrong, you will notice error messages in the output.
 
 
+After the execution of a test, the status of the test is marked by a series of
+flags. They have the following meaning:
+
+ D - DIFFERENT
+    Some of the numbers in the output are different from the reference outputs.
+
+ E - ERROR
+    The driver script return with a non-zero exit code.
+
+ F - FAILED
+    The CP2K binary returned a non-zero exit code.
+
+ M - MISSING
+    The output file could not be found.
+
+ N - NEW
+    There is no reference output for this test.
+
+ O - OK
+    All the tests for this input went fine. In the case of regression tests
+    without reference outputs, the status is also OK.
+
+ R - RESET
+    An additional RESET directive was found in the input. The new output is
+    copied to the reference directory.
+
+ V - VERBOSE
+    The CP2K binary write some data to the standard output or standard error.
+    This is not considered to be erroneous. However, when the test does not have
+    the OK flag, the standard output and standard error is included in the final
+    error report.
+
+ W - WRONG
+    Some value in the output differs from the coresponding expected value.
+
+
 Writing tests
 ~~~~~~~~~~~~~
 
