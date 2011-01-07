@@ -116,7 +116,7 @@ def import_main(config):
                 # escape _some_ special characters that are to be taken literally
                 regex = regex.replace('|', '\|').replace('(', '\(').replace(')', '\)')
                 regex = regex.replace('+', '\+')
-                print >> f_dst, '#CPQA TEST SINGLE-VALUE \'%s\' %i' % (
+                print >> f_dst, '#CPQA TEST SCALAR \'%s\' %i' % (
                    regex, int(column) - 1
                 )
             resets = reset_info.get(os.path.join(test_dir, test_input), [])

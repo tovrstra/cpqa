@@ -342,7 +342,7 @@ class ScriptTest(Test):
 
 class ScalarFactory(object):
     def __init__(self):
-        self.directive = 'single-value'
+        self.directive = 'scalar'
 
     def __call__(self, words):
         if len(words) == 2:
@@ -361,12 +361,12 @@ class ScalarFactory(object):
             threshold = float(threshold)
             return ScalarTest(self.directive, regex, column, exp_value, threshold)
         else:
-            raise TypeError('There must be two, three or four arguments for a single-value test.')
+            raise TypeError('There must be two, three or four arguments for a scalar test.')
 
 
 class CompareScalarFactory(object):
     def __init__(self):
-        self.directive = 'compare-single-value'
+        self.directive = 'compare-scalar'
 
     def __call__(self, words):
         if len(words) == 3:
@@ -379,7 +379,7 @@ class CompareScalarFactory(object):
             threshold = float(threshold)
             return CompareScalarTest(self.directive, prefix, regex, column, threshold)
         else:
-            raise TypeError('There must be three arguments for a custom single-value comparison.')
+            raise TypeError('There must be three arguments for a custom scalar comparison.')
 
 
 class ScriptFactory(object):
