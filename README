@@ -26,6 +26,9 @@ In common with the do_regtest script:
 
 - Parallel execution of test jobs and execution of parallel tests runs.
 
+- Interaction with g95 memcheck.
+
+
 Additional features:
 
 - More fine-grained parallelization. Jobs within one directory can be executed
@@ -73,8 +76,6 @@ Additional features:
 Missing features compared to do_regtest:
 
 - Automatic update to latest CVS version.
-
-- Interaction with g95 memcheck or valgrind.
 
 - ...
 
@@ -181,6 +182,9 @@ flags. They have the following meaning:
 
  F - FAILED
     The CP2K binary returned a non-zero exit code.
+
+ L - LEAK
+    A memory leak warning was detected in the standard error.
 
  M - MISSING
     The output file could not be found.

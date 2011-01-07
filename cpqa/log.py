@@ -81,6 +81,8 @@ def log_txt(runner, timer, f=None):
                 print >> f, '   ----- last 20 lines of standard error -----'
                 for line in result.last_stderr_lines:
                     print >> f, line
+            if result.flags['leak']:
+                print >> f, ' * Some memory leaks were detect. Check the stderr.'
             print >> f, '~'*80
 
     # Short summary
@@ -220,6 +222,8 @@ def log_html(runner, timer):
                 for line in result.last_stderr_lines:
                     print >> f, line
                 print >> f, '</pre>'
+            if result.flags['leak']:
+                print >> f, '<p class="cat">Some memory leaks were detect. Check the stderr.</p>'
 
     print >> f, '</body></html>'
     f.close()

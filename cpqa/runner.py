@@ -132,9 +132,9 @@ class Runner(object):
         todo = copy.copy(self.test_inputs)
         running = {}
         done = set([])
-        print '~~~~ ~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print 'Prog   Flags    CP2K  Script Test'
-        print '~~~~ ~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print '~~~~ ~~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print 'Prog   Flags     CP2K  Script Test'
+        print '~~~~ ~~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         counter = 0.0
         total = len(todo)
         waiting = False # Indicate that we are currently waiting on dependencies
@@ -184,7 +184,7 @@ class Runner(object):
                 ]
             p = subprocess.Popen(args, cwd=self.config.tstdir, stdout=subprocess.PIPE)
             running[p.pid] = (p, test_input)
-        print '~~~~ ~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+        print '~~~~ ~~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
 
     def collect_test_results(self):
         print '... Collecting test results.'

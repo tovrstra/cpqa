@@ -76,6 +76,17 @@ def run_cp2k(cp2k_bin, mpi_prefix, test_input):
     return retcode, timer_cp2k
 
 
+def find_mem_leaks(fn_stderr):
+    result = False
+    f = open(fn_stderr)
+    for line in f:
+        if line.startswith('Remaining memory:'):
+            result = True
+            break
+    f.close()
+    return result
+
+
 def main():
     timer_all = Timer()
     # Get command line arguments
@@ -94,6 +105,8 @@ def main():
     last_stdout_lines = tail(test_input.path_stdout)
     last_stderr_lines = tail(test_input.path_stderr)
     flags['verbose'] = len(last_stderr_lines) > 0 or len(last_stdout_lines) > 0
+    # Detect memory leaks in teh stderr
+    flags['leak'] = find_mem_leaks(test_input.path_stderr)
     # Check on refdir
     flags['new'] = not os.path.isfile(os.path.join(refdir, test_input.path_pp))
     # Extract the tests and count the number of resets
@@ -130,7 +143,7 @@ def main():
     # Determine the OK flag
     flags['ok'] = not (flags['wrong'] or (flags['different'] and not
                   flags['reset']) or flags['missing'] or flags['failed'] or
-                  flags['error'])
+                  flags['error'] or flags['leak'])
     # Write the TestResult to a pickle file
     timer_all.stop()
     test_result = TestResult(
