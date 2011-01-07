@@ -24,7 +24,7 @@ import os, sys
 from optparse import OptionParser
 
 from cpqa import Config, compile_cp2k, Work, Runner, log_txt, log_html, Timer, \
-    import_main
+    import_main, update_source
 
 
 usage = """Usage: %prog [options] [input1.inp input2.inp ...] [directory1 directory2 ...] [fast:n|slow:n]
@@ -62,6 +62,8 @@ def main():
     config.parse_args()
     # Initialize the working directory.
     work = Work(config)
+    # Update the source code
+    update_source(config)
     # Try to compile CP2K
     compile_cp2k(config)
     # Create a test runner. It will produce a Makefile based on the #CPQA

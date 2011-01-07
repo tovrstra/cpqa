@@ -6,5 +6,6 @@ nproc=2
     # %s will be substituted by the actual cp2k binary.
     # %% is replaced by a single % sign.
     # No other single % charactes should be present.
+#cvs_update='cvs update -dP'
 #nproc_mpi=1
 #mpi_prefix='mpirun -np %i'

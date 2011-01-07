@@ -28,6 +28,8 @@ In common with the do_regtest script:
 
 - Interaction with g95 memcheck.
 
+- Automatic update to latest CVS version.
+
 
 Additional features:
 
@@ -74,8 +76,6 @@ Additional features:
 - ...
 
 Missing features compared to do_regtest:
-
-- Automatic update to latest CVS version.
 
 - ...
 
@@ -148,6 +148,7 @@ Usage
         version='sdbg'
         nproc=2
         #exe='valgrind %s'
+        #cvs_update='cvs update -dP'
         #nproc_mpi=1
         #mpi_prefix='mpirun -np %i'
 
