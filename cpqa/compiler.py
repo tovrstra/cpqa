@@ -19,7 +19,7 @@
 # --
 
 
-import os
+import os, subprocess
 
 
 __all__ = ['compile_cp2k']
@@ -28,9 +28,16 @@ __all__ = ['compile_cp2k']
 def compile_cp2k(config):
     print '... Compiling CP2K.'
     make_outfn = os.path.join(os.path.abspath(config.tstdir), 'compile.log')
-    retcode = os.system('cd %s; cd makefiles; make ARCH=%s VERSION=%s -j %i 2>&1 > %s' % (
-        config.cp2k_root, config.arch, config.version, config.nproc, make_outfn
-    ))
+    f = open(make_outfn, 'w')
+    p = subprocess.Popen(
+        'make ARCH=%s VERSION=%s -j%i' % (config.arch, config.version, config.nproc),
+        cwd=os.path.join(config.cp2k_root, 'makefiles'),
+        stdout=f,
+        stderr=subprocess.STDOUT,
+        shell=True,
+    )
+    f.close()
+    retcode = p.wait()
     if retcode != 0:
         raise RuntimeError('CP2K compilation failed.')
     if not os.path.isfile(config.cp2k_bin):
