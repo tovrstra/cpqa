@@ -43,8 +43,6 @@ def parse_args():
         cp2k_bin, path_inp, refdir, mpi_prefix = args
     else:
         raise TypeError('Excpecting three or four arguments.')
-    if not os.path.isfile(cp2k_bin):
-        raise ValueError('CP2K binary "%s" not found.' % args[0])
     return cp2k_bin, path_inp, refdir, mpi_prefix
 
 

@@ -178,12 +178,14 @@ class Runner(object):
             # Launch the new job
             if self.config.mpi_prefix is None:
                 args = [
-                    'cpqa-driver.py', os.path.abspath(self.config.cp2k_bin),
+                    'cpqa-driver.py',
+                    self.config.exe % os.path.abspath(self.config.cp2k_bin),
                     test_input.path_inp, self.config.refdir
                 ]
             else:
                 args = [
-                    'cpqa-driver.py', os.path.abspath(self.config.cp2k_bin),
+                    'cpqa-driver.py',
+                    self.config.exe % os.path.abspath(self.config.cp2k_bin),
                     test_input.path_inp, self.config.refdir,
                     self.config.mpi_prefix
                 ]

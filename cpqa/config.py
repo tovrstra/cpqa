@@ -34,6 +34,7 @@ class Config(object):
         self.cp2k_root = user_config.__dict__.get('cp2k_root', os.path.join('..', 'cp2k'))
         self.arch = user_config.__dict__.get('arch', None)
         self.version = user_config.__dict__.get('version', None)
+        self.exe = user_config.__dict__.get('exe', '%s')
         self.nproc = user_config.__dict__.get('nproc', 1)
         self.nproc_mpi = user_config.__dict__.get('nproc_mpi', 1)
         self.mpi_prefix = user_config.__dict__.get('mpi_prefix', None)
@@ -45,6 +46,8 @@ class Config(object):
             raise TypeError('Error in config.py: arch must be a string.')
         if not isinstance(self.version, basestring):
             raise TypeError('Error in config.py: version must be a string.')
+        if not isinstance(self.exe, str):
+            raise TypeError('Error in config.py: exe must be a string.')
         if not isinstance(self.nproc, int):
             raise TypeError('Error in config.py: nproc must be an integer.')
         if self.nproc <= 0:
