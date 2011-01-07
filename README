@@ -178,7 +178,7 @@ flags. They have the following meaning:
     Some of the numbers in the output are different from the reference outputs.
 
  E - ERROR
-    The driver script return with a non-zero exit code.
+    The driver script encountered in internal error.
 
  F - FAILED
     The CP2K binary returned a non-zero exit code.

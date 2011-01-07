@@ -144,12 +144,17 @@ class Runner(object):
                 pid, retcode = os.wait()
                 p, test_input = running.pop(pid)
                 lines = p.stdout.readlines()
-                for line in lines:
-                    if line.startswith('CPQA-PREFIX'):
-                        counter += 1
-                        percent = float(counter)/total*100
-                        print '%3.0f%%' % percent, line[12:-1]
-                        break
+                if retcode != 0:
+                    print 'Test driver script returned a non-zero exit code'
+                    for line in lines:
+                        print line[:-1]
+                else:
+                    for line in lines:
+                        if line.startswith('CPQA-PREFIX'):
+                            counter += 1
+                            percent = float(counter)/total*100
+                            print '%3.0f%%' % percent, line[12:-1]
+                            break
                 done.add(test_input)
             waiting = False
             # Just continue if the todo list is empty
@@ -189,9 +194,14 @@ class Runner(object):
     def collect_test_results(self):
         print '... Collecting test results.'
         for test_input in self.test_inputs:
-            f = file(os.path.join(self.config.tstdir, test_input.path_pp))
-            test_input.tst_result = cPickle.load(f)
-            f.close()
+            fn = os.path.join(self.config.tstdir, test_input.path_pp)
+            if os.path.isfile(fn):
+                f = file(os.path.join(self.config.tstdir, test_input.path_pp))
+                test_input.tst_result = cPickle.load(f)
+                f.close()
+            else:
+                print 'Could not find', fn
+                test_input.tst_result = None
 
     def get_disk_usage(self):
         self.refsize = du(self.config.refdir)

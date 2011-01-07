@@ -41,6 +41,8 @@ def log_txt(runner, timer, f=None):
     # Extended overview
     for test_input in runner.test_inputs:
         result = test_input.tst_result
+        if result is None:
+            continue
         if not result.flags['ok']:
             print >> f, '~'*80
             print >> f, 'Problems with %s' % test_input.path_inp
@@ -89,6 +91,8 @@ def log_txt(runner, timer, f=None):
     counters = {}
     for test_input in runner.test_inputs:
         result = test_input.tst_result
+        if result is None:
+            continue
         for key in result.flags:
             counters[key] = result.flags[key] + counters.get(key, 0)
     print >> f, '='*80
@@ -156,6 +160,8 @@ def log_html(runner, timer):
     counters = {}
     for test_input in runner.test_inputs:
         result = test_input.tst_result
+        if result is None:
+            continue
         for key in result.flags:
             counters[key] = result.flags[key] + counters.get(key, 0)
     for key, value in sorted(counters.iteritems()):
@@ -170,6 +176,8 @@ def log_html(runner, timer):
     print >> f, '<h2>Regressions</h2>'
     for test_input in runner.test_inputs:
         result = test_input.tst_result
+        if result is None:
+            continue
         if not result.flags['ok']:
             print >> f, '<h3>%s</h3>' % test_input.path_inp
             print >> f, '<p><a href=\'%s\'>%s</a></p>' % (test_input.path_out, test_input.path_out)
