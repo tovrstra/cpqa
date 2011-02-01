@@ -47,8 +47,8 @@ def compile_program(config):
     make_outfn = os.path.join(os.path.abspath(config.tstdir), 'compile.log')
     f = open(make_outfn, 'w')
     p = subprocess.Popen(
-        'make ARCH=%s VERSION=%s -j%i' % (config.arch, config.version, config.nproc),
-        cwd=os.path.join(config.root, 'makefiles'),
+        config.make,
+        cwd=config.makedir,
         stdout=f,
         stderr=subprocess.STDOUT,
         shell=True,
