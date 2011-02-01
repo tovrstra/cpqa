@@ -106,11 +106,11 @@ class TestInput(object):
 
 
 class TestResult(object):
-    def __init__(self, path_inp, flags, seconds_cp2k, seconds, tests,
+    def __init__(self, path_inp, flags, seconds_bin, seconds, tests,
                  messages, last_out_lines, last_stdout_lines, last_stderr_lines):
         self.path_inp = path_inp
         self.flags = flags
-        self.seconds_cp2k = seconds_cp2k
+        self.seconds_bin = seconds_bin
         self.seconds = seconds
         self.tests = tests
         self.messages = messages
@@ -118,4 +118,4 @@ class TestResult(object):
         self.last_stdout_lines = last_stdout_lines
         self.last_stderr_lines = last_stderr_lines
         # derived
-        self.seconds_script = seconds - seconds_cp2k
+        self.seconds_script = seconds - seconds_bin

@@ -147,7 +147,7 @@ Usage
         arch='Linux-x86-64-g95'
         version='sdbg'
         nproc=2
-        #exe='valgrind %s'
+        bin='${root}/exe/${arch}/cp2k.${version}'
         #cvs_update='cvs update -dP'
         #nproc_mpi=1
         #mpi_prefix='mpirun -np %i'

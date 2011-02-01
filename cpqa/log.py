@@ -71,12 +71,12 @@ def log_txt(runner, timer, f=None):
                     if not test.complete(result.flags['new']):
                         print >> f, '    %s' % test.get_command()
             if result.flags['failed']:
-                print >> f, ' * CP2K gave a non-zero return code.'
+                print >> f, ' * Test run gave a non-zero return code.'
                 print >> f, '   ----- last 20 lines of output -----'
                 for line in result.last_out_lines:
                     print >> f, line
             if result.flags['verbose']:
-                print >> f, ' * CP2K gave some standard output/error.'
+                print >> f, ' * Test run gave some standard output/error.'
                 print >> f, '   ----- last 20 lines of standard output -----'
                 for line in result.last_stdout_lines:
                     print >> f, line
@@ -133,7 +133,7 @@ def log_html(runner, timer):
 
     print >> f, '<h2>General info</h2>'
     print >> f, '<table>'
-    print >> f, '<tr><th>CP2K Root</th><td>%s</td></tr>' % config.cp2k_root
+    print >> f, '<tr><th>Root</th><td>%s</td></tr>' % config.root
     print >> f, '<tr><th>Arch</th><td>%s</td></tr>' % config.arch
     print >> f, '<tr><th>Version</th><td>%s</td></tr>' % config.version
     print >> f, '<tr><th>NProc</th><td>%i</td></tr>' % config.nproc
@@ -212,14 +212,14 @@ def log_html(runner, timer):
                         print >> f, '<li><pre>%s</pre></li>' % test.get_command()
                 print >> f, '</ol>'
             if result.flags['failed']:
-                print >> f, '<p class="cat">CP2K gave a non-zero return code.</p>'
+                print >> f, '<p class="cat">Test run gave a non-zero return code.</p>'
                 print >> f, '<p>Last 20 lines of output:</p>'
                 print >> f, '<pre class="grey">'
                 for line in result.last_out_lines:
                     print >> f, line
                 print >> f, '</pre>'
             if result.flags['verbose']:
-                print >> f, '<p class="cat">CP2K gave some standard output/error.</p>'
+                print >> f, '<p class="cat">Test run gave some standard output/error.</p>'
                 print >> f, '<p>Last 20 lines of standard output:</p>'
                 print >> f, '<pre class="grey">'
                 for line in result.last_stdout_lines:

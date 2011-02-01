@@ -120,13 +120,13 @@ def get_confirmation(different):
 def do_reset(config, motivation, different):
     # Split the motivation into lines and add comment characters
     motivation = ['# ' + l for l in motivation.split('\n')]
-    # We have to figure out which TEST_FILES_RESET files in the CP2K input need
+    # We have to figure out which TEST_FILES_RESET files in the input need
     # to be modified, and which lines should be added to each file.
     todo = {}
     for ti in different:
         dirname = os.path.dirname(ti.path_inp)
         fn_inp = os.path.basename(ti.path_inp)
-        reset_file = os.path.join(config.cp2k_root, 'tests', dirname, 'TEST_FILES_RESET')
+        reset_file = os.path.join(config.root, 'tests', dirname, 'TEST_FILES_RESET')
         l = todo.setdefault(reset_file, motivation)
         l.append(fn_inp)
     # Modify the files

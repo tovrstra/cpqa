@@ -26,7 +26,7 @@ from optparse import OptionParser
 from cpqa import TestInput, TestResult, harvest_test, Timer, tail
 
 
-usage = """Usage: %prog cp2k_bin tstpath refdir [mpi_prefix]
+usage = """Usage: %prog bin tstpath refdir [mpi_prefix]
 
 This script is called by cpqa-main.py to run a test job and validate the output.
 It should not be used directly.
@@ -37,16 +37,16 @@ def parse_args():
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
     if len(args) == 3:
-        cp2k_bin, path_inp, refdir = args
+        bin, path_inp, refdir = args
         mpi_prefix = ''
     elif len(args) == 4:
-        cp2k_bin, path_inp, refdir, mpi_prefix = args
+        bin, path_inp, refdir, mpi_prefix = args
     else:
         raise TypeError('Excpecting three or four arguments.')
-    return cp2k_bin, path_inp, refdir, mpi_prefix
+    return bin, path_inp, refdir, mpi_prefix
 
 
-def print_log_line(path_inp, flags, sec_cp2k, sec_all):
+def print_log_line(path_inp, flags, sec_bin, sec_all):
     print "CPQA-PREFIX",
     tag = ''
     for key, value in sorted(flags.iteritems()):
@@ -55,23 +55,23 @@ def print_log_line(path_inp, flags, sec_cp2k, sec_all):
         else:
             tag += "-"
     print tag,
-    print '%6.2f' % sec_cp2k,
-    print '%6.2f' % (sec_all-sec_cp2k),
+    print '%6.2f' % sec_bin,
+    print '%6.2f' % (sec_all-sec_bin),
     print path_inp
 
 
-def run_cp2k(cp2k_bin, mpi_prefix, test_input):
+def run_test(bin, mpi_prefix, test_input):
     dirname, fn_inp = os.path.split(test_input.path_inp)
     fn_out = os.path.basename(test_input.path_out)
     fn_stdout = os.path.basename(test_input.path_stdout)
     fn_stderr = os.path.basename(test_input.path_stderr)
     command = 'cd ./%s; %s %s -i %s -o %s > %s 2> %s' % (
-        dirname, mpi_prefix, cp2k_bin, fn_inp, fn_out, fn_stdout, fn_stderr
+        dirname, mpi_prefix, bin, fn_inp, fn_out, fn_stdout, fn_stderr
     )
-    timer_cp2k = Timer()
+    timer_bin = Timer()
     retcode = os.system(command)
-    timer_cp2k.stop()
-    return retcode, timer_cp2k
+    timer_bin.stop()
+    return retcode, timer_bin
 
 
 def find_mem_leaks(fn_stderr):
@@ -88,15 +88,15 @@ def find_mem_leaks(fn_stderr):
 def main():
     timer_all = Timer()
     # Get command line arguments
-    cp2k_bin, path_inp, refdir, mpi_prefix = parse_args()
+    bin, path_inp, refdir, mpi_prefix = parse_args()
     test_input = TestInput('./', path_inp)
     refdir = os.path.join('..', refdir)
     # Flags to display the status of the test.
     flags = {}
     # To record error messages of this script:
     messages = []
-    # Run cp2k
-    retcode, timer_cp2k = run_cp2k(cp2k_bin, mpi_prefix, test_input)
+    # Run test job
+    retcode, timer_bin = run_test(bin, mpi_prefix, test_input)
     flags['failed'] = (retcode != 0)
     # Get the last 20 lines
     last_out_lines = tail(test_input.path_out)
@@ -145,7 +145,7 @@ def main():
     # Write the TestResult to a pickle file
     timer_all.stop()
     test_result = TestResult(
-        path_inp, flags, timer_cp2k.seconds, timer_all.seconds,
+        path_inp, flags, timer_bin.seconds, timer_all.seconds,
         test_input.tests, messages, last_out_lines, last_stdout_lines,
         last_stderr_lines
     )
@@ -163,7 +163,7 @@ def main():
         shutil.copy(test_input.path_stderr, dstdir)
         shutil.copy(test_input.path_stdout, dstdir)
     # Print some screen output.
-    print_log_line(path_inp, flags, timer_cp2k.seconds, timer_all.seconds)
+    print_log_line(path_inp, flags, timer_bin.seconds, timer_all.seconds)
 
 
 

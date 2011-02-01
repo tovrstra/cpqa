@@ -19,7 +19,7 @@
 # --
 
 
-import os, imp, datetime, sys, optparse
+import os, imp, datetime, sys, optparse, string
 
 
 __all__ = ['Config']
@@ -31,24 +31,24 @@ class Config(object):
         if not os.path.isfile('config.py'):
             raise IOError('Could not find file config.py')
         user_config = imp.load_source('user-config', 'config.py')
-        self.cp2k_root = user_config.__dict__.get('cp2k_root', os.path.join('..', 'cp2k'))
+        self.root = user_config.__dict__.get('root', os.path.join('..', 'cp2k'))
         self.arch = user_config.__dict__.get('arch', None)
         self.version = user_config.__dict__.get('version', None)
-        self.exe = user_config.__dict__.get('exe', '%s')
+        self.bin = user_config.__dict__.get('bin', None)
         self.cvs_update = user_config.__dict__.get('cvs_update', None)
         self.nproc = user_config.__dict__.get('nproc', 1)
         self.nproc_mpi = user_config.__dict__.get('nproc_mpi', 1)
         self.mpi_prefix = user_config.__dict__.get('mpi_prefix', None)
         os.remove('config.pyc')
         # Some type checking on the config.py data
-        if not isinstance(self.cp2k_root, basestring):
-            raise TypeError('Error in config.py: cp2k_root must be a string.')
+        if not isinstance(self.root, basestring):
+            raise TypeError('Error in config.py: root must be a string.')
         if not isinstance(self.arch, basestring):
             raise TypeError('Error in config.py: arch must be a string.')
         if not isinstance(self.version, basestring):
             raise TypeError('Error in config.py: version must be a string.')
-        if not isinstance(self.exe, basestring):
-            raise TypeError('Error in config.py: exe must be a string.')
+        if not isinstance(self.bin, basestring):
+            raise TypeError('Error in config.py: bin must be a string.')
         if self.cvs_update is not None and not isinstance(self.cvs_update, basestring):
             raise TypeError('Error in config.py: cvs_update must be a string.')
         if not isinstance(self.nproc, int):
@@ -64,7 +64,7 @@ class Config(object):
                 raise TypeError('Error in config.py: mpi_prefix must be a string or None.')
             self.mpi_prefix = self.mpi_prefix % self.nproc_mpi
         # Some derived config vars and checks
-        self.cp2k_bin = os.path.join(self.cp2k_root, 'exe', self.arch, 'cp2k.%s' % self.version)
+        self.bin = string.Template(self.bin).safe_substitute(root=self.root, arch=self.arch, version=self.version)
         self.bintag = '%s--%s' % (self.arch, self.version)
         self.lastlink = 'tst--%s--last' % self.bintag
         if use_last:

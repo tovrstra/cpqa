@@ -22,7 +22,7 @@
 import os, subprocess
 
 
-__all__ = ['update_source', 'compile_cp2k']
+__all__ = ['update_source', 'compile_program']
 
 
 def update_source(config):
@@ -34,7 +34,7 @@ def update_source(config):
         f = open(cvs_outfn, 'w')
         p = subprocess.Popen(
             config.cvs_update,
-            cwd=os.path.join(config.cp2k_root),
+            cwd=os.path.join(config.root),
             stdout=f,
             stderr=subprocess.STDOUT,
             shell=True,
@@ -42,13 +42,13 @@ def update_source(config):
         f.close()
 
 
-def compile_cp2k(config):
-    print '... Compiling CP2K.'
+def compile_program(config):
+    print '... Compiling.'
     make_outfn = os.path.join(os.path.abspath(config.tstdir), 'compile.log')
     f = open(make_outfn, 'w')
     p = subprocess.Popen(
         'make ARCH=%s VERSION=%s -j%i' % (config.arch, config.version, config.nproc),
-        cwd=os.path.join(config.cp2k_root, 'makefiles'),
+        cwd=os.path.join(config.root, 'makefiles'),
         stdout=f,
         stderr=subprocess.STDOUT,
         shell=True,
@@ -56,6 +56,6 @@ def compile_cp2k(config):
     f.close()
     retcode = p.wait()
     if retcode != 0:
-        raise RuntimeError('CP2K compilation failed.')
-    if not os.path.isfile(config.cp2k_bin):
-        raise IOError('Could not locate cp2k binary: %s' % config.cp2k_bin)
+        raise RuntimeError('Compilation failed.')
+    if not os.path.isfile(config.bin):
+        raise IOError('Could not locate binary: %s' % config.bin)

@@ -29,11 +29,11 @@ __all__ = ['import_main']
 
 
 def import_main(config):
-    print '... Importing tests from the CP2K source tree.'
+    print '... Importing tests from the source tree.'
 
     # load list of test types
     test_types= []
-    f = open(os.path.join(config.cp2k_root, 'tests', 'TEST_TYPES'))
+    f = open(os.path.join(config.root, 'tests', 'TEST_TYPES'))
     f.next() # skip first line
     for line in f:
         line = line[:line.find('#')].strip()
@@ -44,7 +44,7 @@ def import_main(config):
 
     # Load all test dirs
     test_dirs = []
-    f = open(os.path.join(config.cp2k_root, 'tests', 'TEST_DIRS'))
+    f = open(os.path.join(config.root, 'tests', 'TEST_DIRS'))
     for line in f:
         if line.startswith('#'):
             continue
@@ -54,7 +54,7 @@ def import_main(config):
     # Load all test inputs
     test_inputs = []
     for test_dir in test_dirs:
-        f = open(os.path.join(config.cp2k_root, 'tests', test_dir, 'TEST_FILES'))
+        f = open(os.path.join(config.root, 'tests', test_dir, 'TEST_FILES'))
         for line in f:
             if line.startswith('#'):
                 continue
@@ -66,7 +66,7 @@ def import_main(config):
     # Load reset information
     reset_info = {}
     for test_dir in test_dirs:
-        f = open(os.path.join(config.cp2k_root, 'tests', test_dir, 'TEST_FILES_RESET'))
+        f = open(os.path.join(config.root, 'tests', test_dir, 'TEST_FILES_RESET'))
         # skip the first two lines.
         try:
             f.next()
@@ -101,7 +101,7 @@ def import_main(config):
     # Load inputs and transform them
     paths_extra = set([])
     for test_dir, test_input, test_index in test_inputs:
-        src_test_dir = os.path.join(config.cp2k_root, 'tests', test_dir)
+        src_test_dir = os.path.join(config.root, 'tests', test_dir)
         dst_test_dir = os.path.join(config.indir, test_dir)
         if not os.path.isdir(dst_test_dir):
             os.makedirs(dst_test_dir)
@@ -130,14 +130,14 @@ def import_main(config):
         f_src.close()
         f_dst.close()
         # Get the extra paths
-        test_input = TestInput(os.path.join(config.cp2k_root, 'tests'), os.path.join(test_dir, test_input))
+        test_input = TestInput(os.path.join(config.root, 'tests'), os.path.join(test_dir, test_input))
         for path_extra in test_input.paths_extra:
             paths_extra.add(path_extra)
 
     # Copy extra files needed by the inputs
     for path_extra in paths_extra:
         extra_dir = os.path.dirname(path_extra)
-        src_path_extra = os.path.join(config.cp2k_root, 'tests', path_extra)
+        src_path_extra = os.path.join(config.root, 'tests', path_extra)
         dst_path_extra = os.path.join(config.indir, path_extra)
         dst_extra_dir = os.path.join(config.indir, extra_dir)
         if not os.path.isdir(dst_extra_dir):

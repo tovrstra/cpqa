@@ -133,7 +133,7 @@ class Runner(object):
         running = {}
         done = set([])
         print '~~~~ ~~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print 'Prog   Flags     CP2K  Script Test'
+        print 'Prog   Flags    Binary Script Test'
         print '~~~~ ~~~~~~~~~~ ~~~~~~ ~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         counter = 0.0
         total = len(todo)
@@ -179,13 +179,13 @@ class Runner(object):
             if self.config.mpi_prefix is None:
                 args = [
                     'cpqa-driver.py',
-                    self.config.exe % os.path.abspath(self.config.cp2k_bin),
+                    os.path.abspath(self.config.bin),
                     test_input.path_inp, self.config.refdir
                 ]
             else:
                 args = [
                     'cpqa-driver.py',
-                    self.config.exe % os.path.abspath(self.config.cp2k_bin),
+                    os.path.abspath(self.config.bin),
                     test_input.path_inp, self.config.refdir,
                     self.config.mpi_prefix
                 ]

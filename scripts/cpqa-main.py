@@ -23,7 +23,7 @@
 import os, sys
 from optparse import OptionParser
 
-from cpqa import Config, compile_cp2k, Work, Runner, log_txt, log_html, Timer, \
+from cpqa import Config, compile_program, Work, Runner, log_txt, log_html, Timer, \
     import_main, update_source
 
 
@@ -42,7 +42,7 @@ def parse_args():
     parser = OptionParser(usage)
     parser.add_option(
         "--no-import", default=True, action='store_false', dest='do_import',
-        help="Do not import tests from the cp2k source tree",
+        help="Do not import tests from the source tree",
     )
     (options, args) = parser.parse_args()
     return options, args
@@ -64,8 +64,8 @@ def main():
     work = Work(config)
     # Update the source code
     update_source(config)
-    # Try to compile CP2K
-    compile_cp2k(config)
+    # Try to compile the program
+    compile_program(config)
     # Create a test runner. It will produce a Makefile based on the #CPQA
     # directives in the test inputs. It runs the make file, logs some screen
     # output and collects all the test results in the attributes of the runner
