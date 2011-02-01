@@ -126,7 +126,7 @@ def do_reset(config, motivation, different):
     for ti in different:
         dirname = os.path.dirname(ti.path_inp)
         fn_inp = os.path.basename(ti.path_inp)
-        reset_file = os.path.join(config.root, 'tests', dirname, 'TEST_FILES_RESET')
+        reset_file = os.path.join(config.testsrc, dirname, 'TEST_FILES_RESET')
         l = todo.setdefault(reset_file, motivation)
         l.append(fn_inp)
     # Modify the files

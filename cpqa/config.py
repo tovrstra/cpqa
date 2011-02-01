@@ -35,6 +35,7 @@ class Config(object):
         self.arch = user_config.__dict__.get('arch', None)
         self.version = user_config.__dict__.get('version', None)
         self.bin = user_config.__dict__.get('bin', None)
+        self.testsrc = user_config.__dict__.get('testsrc', None)
         self.cvs_update = user_config.__dict__.get('cvs_update', None)
         self.nproc = user_config.__dict__.get('nproc', 1)
         self.nproc_mpi = user_config.__dict__.get('nproc_mpi', 1)
@@ -49,6 +50,8 @@ class Config(object):
             raise TypeError('Error in config.py: version must be a string.')
         if not isinstance(self.bin, basestring):
             raise TypeError('Error in config.py: bin must be a string.')
+        if not isinstance(self.testsrc, basestring):
+            raise TypeError('Error in config.py: testsrc must be a string.')
         if self.cvs_update is not None and not isinstance(self.cvs_update, basestring):
             raise TypeError('Error in config.py: cvs_update must be a string.')
         if not isinstance(self.nproc, int):
@@ -65,6 +68,7 @@ class Config(object):
             self.mpi_prefix = self.mpi_prefix % self.nproc_mpi
         # Some derived config vars and checks
         self.bin = string.Template(self.bin).safe_substitute(root=self.root, arch=self.arch, version=self.version)
+        self.testsrc = string.Template(self.testsrc).safe_substitute(root=self.root, arch=self.arch, version=self.version)
         self.bintag = '%s--%s' % (self.arch, self.version)
         self.lastlink = 'tst--%s--last' % self.bintag
         if use_last:
